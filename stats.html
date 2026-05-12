@@ -39,6 +39,13 @@
             gap: 10px;
         }
 
+        .top-bar-left {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
         .top-bar h1 { font-size: 1.5rem; }
 
         .top-bar-right { display: flex; gap: 8px; align-items: center; }
@@ -367,9 +374,9 @@
 </head>
 <body>
     <div class="top-bar">
-        <div style="display:flex;flex-direction:column;gap:6px;">
+        <div class="top-bar-left">
             <h1>📊 Stats</h1>
-            <a href="admin.html" class="ghost-btn" style="width:fit-content;">← Admin panel</a>
+            <a href="admin.html" class="ghost-btn">← Admin panel</a>
         </div>
         <div class="top-bar-right">
             <span class="admin-badge">🔑 Admin mode</span>
