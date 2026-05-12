@@ -112,6 +112,21 @@
 
         .footer-link:hover { color: var(--accent); border-color: var(--accent); }
 
+        .footer-btn {
+            cursor: pointer;
+            background: transparent;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 6px 14px;
+            color: var(--text-muted);
+            font: inherit;
+            font-size: 0.82rem;
+            font-weight: 600;
+            transition: color 0.2s, border-color 0.2s;
+        }
+
+        .footer-btn:hover { color: var(--accent); border-color: var(--accent); }
+
         @media (max-width: 480px) {
             h1 { font-size: 1.5rem; }
             .player-row { padding: 12px 15px; font-size: 1.1rem; }
@@ -125,11 +140,17 @@
 
     <div class="footer-links">
         <a href="stats.html?from=scoreboard" class="footer-link">📊 Stats &amp; History</a>
+        <button class="footer-btn" id="shareBtn">🔗 Share Scoreboard</button>
     </div>
 
     <script type="module">
         import { db, ref, onValue } from './firebase-config.js';
         const gameRef = ref(db, 'currentGame');
+        const scoreboardUrl = 'https://navs7.github.io/board-game-score/';
+
+        document.getElementById('shareBtn').addEventListener('click', async () => {
+            await navigator.clipboard.writeText(scoreboardUrl);
+        });
 
         onValue(gameRef, (snapshot) => {
             const data = snapshot.val();
