@@ -592,6 +592,7 @@
             await set(newGameRef, {
                 gameName: data.gameName,
                 rankingOrder: data.rankingOrder,
+                winnerLabel: data.rankingOrder === 'highest' ? 'Highest Score Wins' : 'Lowest Score Wins',
                 endedAt,
                 players: rankedPlayers
             });
@@ -608,6 +609,7 @@
                     score: rp.totalScore,
                     rank: rp.rank,
                     won: rp.won,
+                    winnerLabel: data.rankingOrder === 'highest' ? 'Highest Score Wins' : 'Lowest Score Wins',
                     totalPlayers: rankedPlayers.length,
                     endedAt
                 };

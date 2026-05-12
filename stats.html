@@ -436,6 +436,10 @@
             return d.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
         }
 
+        function getWinnerLabel(mode) {
+            return mode === 'lowest' ? 'Lowest Score Winner' : 'Highest Score Winner';
+        }
+
         function escapeHtml(str) {
             return String(str)
                 .replace(/&/g, '&amp;').replace(/</g, '&lt;')
@@ -461,6 +465,7 @@
 
             games.forEach(game => {
                 const winner = (game.players || []).find(p => p.rank === 1);
+                const winnerLabel = getWinnerLabel(game.rankingOrder);
 
                 const card = document.createElement('div');
                 card.className = 'card';
@@ -470,7 +475,7 @@
                 header.innerHTML = `
                     <div class="card-header-left">
                         <div class="card-title">${escapeHtml(game.gameName)}</div>
-                        <div class="card-subtitle">🏆 ${winner ? escapeHtml(winner.name) : '—'} &nbsp;·&nbsp; ${game.players ? game.players.length : 0} players</div>
+                        <div class="card-subtitle">${escapeHtml(winnerLabel)} · ${winner ? escapeHtml(winner.name) : '—'} &nbsp;·&nbsp; ${game.players ? game.players.length : 0} players</div>
                     </div>
                     <div class="card-header-right">
                         <span class="card-meta">${formatDate(game.endedAt)}</span>
@@ -633,7 +638,7 @@
                 const gameRows = games.map(g => `
                     <div class="game-row">
                         <span class="game-name">${escapeHtml(g.gameName)}</span>
-                        ${g.won ? '<span class="won-badge">Won</span>' : ''}
+                        ${g.won ? `<span class="won-badge">${escapeHtml(g.winnerLabel || 'Won')}</span>` : ''}
                         <span class="game-rank">#${g.rank} of ${g.totalPlayers}</span>
                         <span class="rank-score">${g.score} pts</span>
                         <span style="font-size:0.75rem;color:var(--text-muted);white-space:nowrap;">${formatDate(g.endedAt)}</span>
