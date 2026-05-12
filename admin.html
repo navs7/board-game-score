@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin - Score Tracker</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap');
+
+        :root {
+            --bg-color: #f8fafc;
+            --text-main: #0f172a;
+            --card-bg: #ffffff;
+            --border: #e2e8f0;
+            --primary: #3b82f6;
+            --primary-hover: #2563eb;
+            --danger: #ef4444;
+            --danger-hover: #dc2626;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body { 
+            font-family: 'Inter', sans-serif; 
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            padding: 20px; 
+            max-width: 600px; 
+            margin: auto; 
+        }
+
+        h1, h2, h3 { color: var(--text-main); text-align: center; }
+
+        .panel {
+            background: var(--card-bg);
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+            margin-bottom: 20px;
+        }
+
+        input[type="text"], input[type="number"] { 
+            width: 100%;
+            padding: 12px; 
+            margin-bottom: 15px; 
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            font-size: 1rem;
+            font-family: 'Inter', sans-serif;
+        }
+
+        .radio-group {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 1rem;
+            cursor: pointer;
+        }
+
+        button { 
+            width: 100%;
+            cursor: pointer; 
+            padding: 12px; 
+            font-size: 1rem;
+            font-weight: 600;
+            border: none;
+            border-radius: 8px;
+            background-color: var(--primary);
+            color: white;
+            transition: background-color 0.2s;
+        }
+
+        button:hover { background-color: var(--primary-hover); }
+
+        .player-card { 
+            background: var(--card-bg);
+            border: 1px solid var(--border); 
+            padding: 16px; 
+            margin-bottom: 12px; 
+            border-radius: 12px; 
+            box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+        }
+
+        .player-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 1.1rem;
+            margin-bottom: 12px;
+        }
+
+        .controls { 
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+
+        .controls input {
+            grid-column: span 2;
+            margin-bottom: 0;
+        }
+
+        .btn-danger {
+            background-color: var(--danger);
+        }
+
+        .btn-danger:hover {
+            background-color: var(--danger-hover);
+        }
+
+        .small-text { 
+            font-size: 0.85rem; 
+            color: #64748b; 
+            display: block; 
+            margin-top: 12px; 
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <h1>Game Admin Panel</h1>
+
+    <div id="new-game-section" class="panel">
+        <h3>Create New Game</h3>
+        <input type="text" id="gameName" placeholder="Game Name (e.g., Catan)">
+        <input type="text" id="playerNames" placeholder="Player Names (comma separated)">
+        
+        <div class="radio-group">
+            <label><input type="radio" name="rankingOrder" value="highest" checked> Highest Score Wins</label>
+            <label><input type="radio" name="rankingOrder" value="lowest"> Lowest Score Wins</label>
+        </div>
+        
+        <button id="startGameBtn">Start New Game</button>
+    </div>
+
+    <div id="active-game-section" style="display: none;">
+        <h2 id="activeGameTitle"></h2>
+        <div id="playersContainer"></div>
+        <div class="panel" style="margin-top: 20px;">
+            <button class="btn-danger" id="endGameBtn">End Game &amp; Start New</button>
+        </div>
+    </div>
+
+    <script type="module">
+        import { db, ref, set, onValue, get } from './firebase-config.js';
+        const gameRef = ref(db, 'currentGame');
+
+        function escapeHtml(str) {
+            return String(str)
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#39;');
+        }
+
+        document.getElementById('startGameBtn').addEventListener('click', () => {
+            const gameName = document.getElementById('gameName').value.trim();
+            const names = document.getElementById('playerNames').value
+                .split(',')
+                .map(n => n.trim())
+                .filter(n => n.length > 0);
+            const rankingOrder = document.querySelector('input[name="rankingOrder"]:checked').value;
+
+            if (!gameName) {
+                alert('Please enter a game name.');
+                return;
+            }
+            if (names.length === 0) {
+                alert('Please enter at least one player name.');
+                return;
+            }
+
+            const playersData = {};
+            names.forEach((name, index) => {
+                playersData[`player_${index}`] = {
+                    name: name,
+                    totalScore: 0,
+                    history: []
+                };
+            });
+
+            set(gameRef, {
+                gameStatus: "active",
+                gameName: gameName,
+                rankingOrder: rankingOrder,
+                players: playersData
+            });
+        });
+
+        document.getElementById('endGameBtn').addEventListener('click', () => {
+            if (!confirm('Are you sure you want to end the current game?')) return;
+            set(gameRef, { gameStatus: "ended" });
+            document.getElementById('gameName').value = '';
+            document.getElementById('playerNames').value = '';
+        });
+
+        onValue(gameRef, (snapshot) => {
+            const data = snapshot.val();
+            if (data && data.gameStatus === "active") {
+                document.getElementById('new-game-section').style.display = 'none';
+                document.getElementById('active-game-section').style.display = 'block';
+                document.getElementById('activeGameTitle').innerText = data.gameName;
+
+                const container = document.getElementById('playersContainer');
+                const existingCards = new Set(Array.from(container.children).map(c => c.dataset.playerId));
+                const incomingIds = new Set(Object.keys(data.players));
+
+                existingCards.forEach(id => {
+                    if (!incomingIds.has(id)) {
+                        container.querySelector(`[data-player-id="${id}"]`).remove();
+                    }
+                });
+
+                Object.keys(data.players).forEach(playerId => {
+                    const player = data.players[playerId];
+                    const history = player.history || [];
+
+                    let card = container.querySelector(`[data-player-id="${playerId}"]`);
+
+                    if (!card) {
+                        card = document.createElement('div');
+                        card.className = 'player-card';
+                        card.dataset.playerId = playerId;
+                        card.innerHTML = `
+                            <div class="player-header">
+                                <strong class="player-name"></strong>
+                                <span>Total: <strong class="player-total"></strong></span>
+                            </div>
+                            <div class="controls">
+                                <input type="number" id="score_${escapeHtml(playerId)}" placeholder="Enter round score">
+                                <button onclick="window.addScore('${escapeHtml(playerId)}')">Add Score</button>
+                                <button class="btn-danger" onclick="window.undoScore('${escapeHtml(playerId)}')">Undo Last</button>
+                            </div>
+                            <span class="small-text player-history"></span>
+                        `;
+                        container.appendChild(card);
+                    }
+
+                    card.querySelector('.player-name').textContent = player.name;
+                    card.querySelector('.player-total').textContent = player.totalScore;
+                    card.querySelector('.player-history').textContent =
+                        'History: ' + (history.length > 0 ? history.join(' → ') : 'No scores yet');
+                });
+            } else {
+                document.getElementById('new-game-section').style.display = 'block';
+                document.getElementById('active-game-section').style.display = 'none';
+                document.getElementById('playersContainer').innerHTML = '';
+            }
+        });
+
+        window.addScore = async (playerId) => {
+            const input = document.getElementById(`score_${playerId}`);
+            const scoreInput = input.value;
+            if (scoreInput === '' || scoreInput === null) return;
+            const scoreNum = parseInt(scoreInput);
+            if (isNaN(scoreNum)) return;
+
+            const snapshot = await get(gameRef);
+            const data = snapshot.val();
+            const player = data.players[playerId];
+
+            if (!player.history) player.history = [];
+            player.history.push(scoreNum);
+            player.totalScore += scoreNum;
+
+            await set(gameRef, data);
+            input.value = '';
+        };
+
+        window.undoScore = async (playerId) => {
+            const snapshot = await get(gameRef);
+            const data = snapshot.val();
+            const player = data.players[playerId];
+
+            if (!player.history || player.history.length === 0) return;
+
+            const lastScore = player.history.pop();
+            player.totalScore -= lastScore;
+
+            set(gameRef, data);
+        };
+    </script>
+</body>
+</html>

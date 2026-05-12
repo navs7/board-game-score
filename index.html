@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Live Scoreboard</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap');
+        
+        :root {
+            --bg-color: #0f172a;
+            --card-bg: #1e293b;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --accent: #3b82f6;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body { 
+            font-family: 'Inter', sans-serif; 
+            background-color: var(--bg-color); 
+            color: var(--text-main); 
+            margin: 0; 
+            padding: 20px; 
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        h1 {
+            font-size: 2rem;
+            text-align: center;
+            margin-bottom: 2rem;
+            color: var(--accent);
+            text-shadow: 0 0 15px rgba(59, 130, 246, 0.4);
+        }
+
+        .leaderboard { 
+            width: 100%;
+            max-width: 500px; 
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .player-row { 
+            background: var(--card-bg); 
+            padding: 16px 20px; 
+            border-radius: 12px; 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center;
+            font-size: 1.25rem; 
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            transition: transform 0.2s ease;
+        }
+
+        .player-info {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .rank {
+            font-weight: 800;
+            color: var(--text-muted);
+            font-size: 1.5rem;
+            min-width: 30px;
+        }
+
+        .score-pill {
+            font-weight: 600;
+            background: rgba(255, 255, 255, 0.1);
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 1.1rem;
+        }
+
+        .top-rank { 
+            background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%); 
+            color: #451a03; 
+            transform: scale(1.03); 
+            box-shadow: 0 10px 20px -5px rgba(251, 191, 36, 0.4); 
+        }
+
+        .top-rank .rank, .top-rank .score-pill {
+            color: #451a03;
+            background: rgba(255, 255, 255, 0.3);
+        }
+
+        @media (max-width: 480px) {
+            h1 { font-size: 1.5rem; }
+            .player-row { padding: 12px 15px; font-size: 1.1rem; }
+            .rank { font-size: 1.25rem; }
+        }
+    </style>
+</head>
+<body>
+    <h1 id="gameTitle">Waiting for game...</h1>
+    <div class="leaderboard" id="leaderboard"></div>
+
+    <script type="module">
+        import { db, ref, onValue } from './firebase-config.js';
+        const gameRef = ref(db, 'currentGame');
+
+        onValue(gameRef, (snapshot) => {
+            const data = snapshot.val();
+            if (!data || data.gameStatus !== 'active') {
+                document.getElementById('gameTitle').innerText = 'Waiting for game...';
+                document.getElementById('leaderboard').innerHTML = '';
+                return;
+            }
+
+            document.getElementById('gameTitle').innerText = data.gameName;
+
+            let playersArray = [];
+            for (let id in data.players) {
+                playersArray.push(data.players[id]);
+            }
+
+            playersArray.sort((a, b) => {
+                if (data.rankingOrder === 'highest') {
+                    return b.totalScore - a.totalScore;
+                } else {
+                    return a.totalScore - b.totalScore;
+                }
+            });
+
+            const leaderboard = document.getElementById('leaderboard');
+            leaderboard.innerHTML = '';
+
+            playersArray.forEach((player, index) => {
+                const row = document.createElement('div');
+                row.className = 'player-row';
+                if (index === 0) row.classList.add('top-rank');
+
+                const info = document.createElement('div');
+                info.className = 'player-info';
+
+                const rank = document.createElement('span');
+                rank.className = 'rank';
+                rank.textContent = `#${index + 1}`;
+
+                const name = document.createElement('strong');
+                name.textContent = player.name;
+
+                info.appendChild(rank);
+                info.appendChild(name);
+
+                const score = document.createElement('span');
+                score.className = 'score-pill';
+                score.textContent = player.totalScore;
+
+                row.appendChild(info);
+                row.appendChild(score);
+                leaderboard.appendChild(row);
+            });
+        });
+    </script>
+</body>
+</html>
