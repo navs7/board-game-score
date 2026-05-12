@@ -334,7 +334,7 @@
         <div class="top-bar">
             <h1>Game Admin Panel</h1>
             <div class="top-bar-actions">
-                <a href="stats.html" style="text-decoration:none;"><button class="ghost-btn">📊 Stats</button></a>
+                <a href="stats.html?from=admin" style="text-decoration:none;"><button class="ghost-btn">📊 Stats</button></a>
                 <button class="ghost-btn danger" id="signOutBtn">Sign out</button>
             </div>
         </div>
@@ -394,7 +394,7 @@
         } from './firebase-config.js';
 
         const gameRef = ref(db, 'currentGame');
-        const scoreboardUrl = window.location.origin + '/index.html';
+        const scoreboardUrl = 'https://navs7.github.io/board-game-score/';
         document.getElementById('shareUrl').value = scoreboardUrl;
 
         function escapeHtml(str) {

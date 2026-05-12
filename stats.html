@@ -376,12 +376,25 @@
     <div class="top-bar">
         <div class="top-bar-left">
             <h1>📊 Stats</h1>
-            <a href="admin.html" class="ghost-btn">← Admin panel</a>
+            <a id="back-link" href="index.html" class="ghost-btn">← Scoreboard</a>
         </div>
         <div class="top-bar-right">
             <span class="admin-badge">🔑 Admin mode</span>
         </div>
     </div>
+    <script>
+        (function() {
+            const from = new URLSearchParams(window.location.search).get('from');
+            const link = document.getElementById('back-link');
+            if (from === 'admin') {
+                link.href = 'admin.html';
+                link.textContent = '← Admin panel';
+            } else {
+                link.href = 'index.html';
+                link.textContent = '← Scoreboard';
+            }
+        })();
+    </script>
 
     <div class="tabs">
         <button class="tab-btn active" id="tab-lb-btn" onclick="switchTab('leaderboard')">🏆 Leaderboard</button>
