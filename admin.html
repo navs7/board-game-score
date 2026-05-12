@@ -8,27 +8,28 @@
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap');
 
         :root {
-            --bg-color: #f8fafc;
-            --text-main: #0f172a;
-            --card-bg: #ffffff;
-            --border: #e2e8f0;
+            --bg-color: #0f172a;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --card-bg: #1e293b;
+            --border: #334155;
             --primary: #3b82f6;
             --primary-hover: #2563eb;
             --danger: #ef4444;
             --danger-hover: #dc2626;
+            --success: #22c55e;
+            --success-hover: #16a34a;
         }
 
-        * {
-            box-sizing: border-box;
-        }
+        * { box-sizing: border-box; }
 
-        body { 
-            font-family: 'Inter', sans-serif; 
+        body {
+            font-family: 'Inter', sans-serif;
             background-color: var(--bg-color);
             color: var(--text-main);
-            padding: 20px; 
-            max-width: 600px; 
-            margin: auto; 
+            padding: 20px;
+            max-width: 600px;
+            margin: auto;
         }
 
         h1, h2, h3 { color: var(--text-main); text-align: center; }
@@ -37,19 +38,39 @@
             background: var(--card-bg);
             padding: 20px;
             border-radius: 12px;
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3);
             margin-bottom: 20px;
+            border: 1px solid var(--border);
         }
 
-        input[type="text"], input[type="number"] { 
+        input[type="text"] {
             width: 100%;
-            padding: 12px; 
-            margin-bottom: 15px; 
+            padding: 10px 12px;
+            margin-bottom: 15px;
             border: 1px solid var(--border);
             border-radius: 8px;
             font-size: 1rem;
             font-family: 'Inter', sans-serif;
+            background: #0f172a;
+            color: var(--text-main);
         }
+
+        input[type="text"]::placeholder { color: var(--text-muted); }
+        input[type="text"]:focus { outline: none; border-color: var(--primary); }
+
+        input[type="number"] {
+            padding: 8px 10px;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            font-size: 0.95rem;
+            font-family: 'Inter', sans-serif;
+            background: #0f172a;
+            color: var(--text-main);
+            width: 100%;
+        }
+
+        input[type="number"]::placeholder { color: var(--text-muted); }
+        input[type="number"]:focus { outline: none; border-color: var(--primary); }
 
         .radio-group {
             display: flex;
@@ -64,13 +85,14 @@
             gap: 8px;
             font-size: 1rem;
             cursor: pointer;
+            color: var(--text-main);
         }
 
-        button { 
+        button {
             width: 100%;
-            cursor: pointer; 
-            padding: 12px; 
-            font-size: 1rem;
+            cursor: pointer;
+            padding: 10px 12px;
+            font-size: 0.95rem;
             font-weight: 600;
             border: none;
             border-radius: 8px;
@@ -81,13 +103,12 @@
 
         button:hover { background-color: var(--primary-hover); }
 
-        .player-card { 
+        .player-card {
             background: var(--card-bg);
-            border: 1px solid var(--border); 
-            padding: 16px; 
-            margin-bottom: 12px; 
-            border-radius: 12px; 
-            box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+            border: 1px solid var(--border);
+            padding: 14px 16px;
+            margin-bottom: 12px;
+            border-radius: 12px;
         }
 
         .player-header {
@@ -95,34 +116,54 @@
             justify-content: space-between;
             align-items: center;
             font-size: 1.1rem;
-            margin-bottom: 12px;
+            margin-bottom: 10px;
         }
 
-        .controls { 
+        .controls {
             display: grid;
-            grid-template-columns: 1fr 1fr;
+            grid-template-columns: 120px 1fr 1fr;
+            gap: 8px;
+            align-items: center;
+        }
+
+        .btn-danger { background-color: var(--danger); }
+        .btn-danger:hover { background-color: var(--danger-hover); }
+
+        .btn-success { background-color: var(--success); }
+        .btn-success:hover { background-color: var(--success-hover); }
+
+        .small-text {
+            font-size: 0.82rem;
+            color: var(--text-muted);
+            display: block;
+            margin-top: 10px;
+        }
+
+        .share-bar {
+            display: flex;
             gap: 10px;
+            align-items: center;
         }
 
-        .controls input {
-            grid-column: span 2;
+        .share-bar input[type="text"] {
             margin-bottom: 0;
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            flex: 1;
         }
 
-        .btn-danger {
-            background-color: var(--danger);
+        .share-bar button {
+            width: auto;
+            padding: 10px 16px;
+            white-space: nowrap;
         }
 
-        .btn-danger:hover {
-            background-color: var(--danger-hover);
-        }
-
-        .small-text { 
-            font-size: 0.85rem; 
-            color: #64748b; 
-            display: block; 
-            margin-top: 12px; 
+        .copy-feedback {
+            font-size: 0.8rem;
+            color: var(--success);
             text-align: center;
+            margin-top: 8px;
+            min-height: 1.2em;
         }
     </style>
 </head>
@@ -133,19 +174,29 @@
         <h3>Create New Game</h3>
         <input type="text" id="gameName" placeholder="Game Name (e.g., Catan)">
         <input type="text" id="playerNames" placeholder="Player Names (comma separated)">
-        
+
         <div class="radio-group">
             <label><input type="radio" name="rankingOrder" value="highest" checked> Highest Score Wins</label>
             <label><input type="radio" name="rankingOrder" value="lowest"> Lowest Score Wins</label>
         </div>
-        
+
         <button id="startGameBtn">Start New Game</button>
     </div>
 
     <div id="active-game-section" style="display: none;">
         <h2 id="activeGameTitle"></h2>
+
+        <div class="panel">
+            <div class="share-bar">
+                <input type="text" id="shareUrl" readonly>
+                <button class="btn-success" id="copyLinkBtn">Copy Link</button>
+            </div>
+            <div class="copy-feedback" id="copyFeedback"></div>
+        </div>
+
         <div id="playersContainer"></div>
-        <div class="panel" style="margin-top: 20px;">
+
+        <div class="panel">
             <button class="btn-danger" id="endGameBtn">End Game &amp; Start New</button>
         </div>
     </div>
@@ -153,6 +204,17 @@
     <script type="module">
         import { db, ref, set, onValue, get } from './firebase-config.js';
         const gameRef = ref(db, 'currentGame');
+
+        const scoreboardUrl = window.location.origin + '/index.html';
+        document.getElementById('shareUrl').value = scoreboardUrl;
+
+        document.getElementById('copyLinkBtn').addEventListener('click', () => {
+            navigator.clipboard.writeText(scoreboardUrl).then(() => {
+                const fb = document.getElementById('copyFeedback');
+                fb.textContent = 'Link copied to clipboard!';
+                setTimeout(() => { fb.textContent = ''; }, 2500);
+            });
+        });
 
         function escapeHtml(str) {
             return String(str)
@@ -171,30 +233,15 @@
                 .filter(n => n.length > 0);
             const rankingOrder = document.querySelector('input[name="rankingOrder"]:checked').value;
 
-            if (!gameName) {
-                alert('Please enter a game name.');
-                return;
-            }
-            if (names.length === 0) {
-                alert('Please enter at least one player name.');
-                return;
-            }
+            if (!gameName) { alert('Please enter a game name.'); return; }
+            if (names.length === 0) { alert('Please enter at least one player name.'); return; }
 
             const playersData = {};
             names.forEach((name, index) => {
-                playersData[`player_${index}`] = {
-                    name: name,
-                    totalScore: 0,
-                    history: []
-                };
+                playersData[`player_${index}`] = { name, totalScore: 0, history: [] };
             });
 
-            set(gameRef, {
-                gameStatus: "active",
-                gameName: gameName,
-                rankingOrder: rankingOrder,
-                players: playersData
-            });
+            set(gameRef, { gameStatus: "active", gameName, rankingOrder, players: playersData });
         });
 
         document.getElementById('endGameBtn').addEventListener('click', () => {
@@ -212,13 +259,11 @@
                 document.getElementById('activeGameTitle').innerText = data.gameName;
 
                 const container = document.getElementById('playersContainer');
-                const existingCards = new Set(Array.from(container.children).map(c => c.dataset.playerId));
+                const existingIds = new Set(Array.from(container.children).map(c => c.dataset.playerId));
                 const incomingIds = new Set(Object.keys(data.players));
 
-                existingCards.forEach(id => {
-                    if (!incomingIds.has(id)) {
-                        container.querySelector(`[data-player-id="${id}"]`).remove();
-                    }
+                existingIds.forEach(id => {
+                    if (!incomingIds.has(id)) container.querySelector(`[data-player-id="${id}"]`).remove();
                 });
 
                 Object.keys(data.players).forEach(playerId => {
@@ -226,7 +271,6 @@
                     const history = player.history || [];
 
                     let card = container.querySelector(`[data-player-id="${playerId}"]`);
-
                     if (!card) {
                         card = document.createElement('div');
                         card.className = 'player-card';
@@ -234,10 +278,10 @@
                         card.innerHTML = `
                             <div class="player-header">
                                 <strong class="player-name"></strong>
-                                <span>Total: <strong class="player-total"></strong></span>
+                                <span style="color:var(--text-muted)">Total: <strong class="player-total" style="color:var(--text-main)"></strong></span>
                             </div>
                             <div class="controls">
-                                <input type="number" id="score_${escapeHtml(playerId)}" placeholder="Enter round score">
+                                <input type="number" id="score_${escapeHtml(playerId)}" placeholder="Score">
                                 <button onclick="window.addScore('${escapeHtml(playerId)}')">Add Score</button>
                                 <button class="btn-danger" onclick="window.undoScore('${escapeHtml(playerId)}')">Undo Last</button>
                             </div>
@@ -260,15 +304,13 @@
 
         window.addScore = async (playerId) => {
             const input = document.getElementById(`score_${playerId}`);
-            const scoreInput = input.value;
-            if (scoreInput === '' || scoreInput === null) return;
-            const scoreNum = parseInt(scoreInput);
+            if (input.value === '') return;
+            const scoreNum = parseInt(input.value);
             if (isNaN(scoreNum)) return;
 
             const snapshot = await get(gameRef);
             const data = snapshot.val();
             const player = data.players[playerId];
-
             if (!player.history) player.history = [];
             player.history.push(scoreNum);
             player.totalScore += scoreNum;
@@ -281,12 +323,8 @@
             const snapshot = await get(gameRef);
             const data = snapshot.val();
             const player = data.players[playerId];
-
             if (!player.history || player.history.length === 0) return;
-
-            const lastScore = player.history.pop();
-            player.totalScore -= lastScore;
-
+            player.totalScore -= player.history.pop();
             set(gameRef, data);
         };
     </script>
