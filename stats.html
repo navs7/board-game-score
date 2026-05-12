@@ -36,25 +36,42 @@
             justify-content: space-between;
             margin-bottom: 24px;
             margin-top: 10px;
+            gap: 10px;
         }
 
         .top-bar h1 { font-size: 1.5rem; }
+
+        .top-bar-right { display: flex; gap: 8px; align-items: center; }
 
         .ghost-btn {
             cursor: pointer;
             border: 1px solid var(--border);
             border-radius: 8px;
             padding: 6px 14px;
-            font-size: 0.85rem;
+            font-size: 0.82rem;
             font-weight: 600;
             background: transparent;
             color: var(--text-muted);
             text-decoration: none;
             transition: color 0.2s, border-color 0.2s;
             display: inline-block;
+            white-space: nowrap;
         }
 
         .ghost-btn:hover { color: var(--text-main); border-color: var(--text-muted); }
+        .ghost-btn.danger:hover { color: var(--danger); border-color: var(--danger); }
+
+        .admin-badge {
+            font-size: 0.75rem;
+            font-weight: 700;
+            color: var(--warning);
+            border: 1px solid var(--warning);
+            padding: 4px 10px;
+            border-radius: 20px;
+            display: none;
+        }
+
+        body.is-admin .admin-badge { display: inline-block; }
 
         /* Tabs */
         .tabs {
@@ -102,15 +119,41 @@
             gap: 10px;
         }
 
+        .card-header-left { flex: 1; min-width: 0; }
         .card-title { font-weight: 700; font-size: 1rem; }
         .card-subtitle { font-size: 0.8rem; color: var(--text-muted); margin-top: 3px; }
 
-        .card-meta {
-            text-align: right;
+        .card-header-right {
+            display: flex;
+            align-items: center;
+            gap: 8px;
             flex-shrink: 0;
+        }
+
+        .card-meta {
             font-size: 0.82rem;
             color: var(--text-muted);
+            text-align: right;
         }
+
+        /* Delete button — hidden until admin */
+        .delete-btn {
+            display: none;
+            cursor: pointer;
+            border: none;
+            background: transparent;
+            color: var(--text-muted);
+            font-size: 1rem;
+            padding: 4px 6px;
+            border-radius: 6px;
+            line-height: 1;
+            transition: color 0.15s, background 0.15s;
+            flex-shrink: 0;
+        }
+
+        .delete-btn:hover { color: var(--danger); background: rgba(239,68,68,0.12); }
+
+        body.is-admin .delete-btn { display: inline-flex; align-items: center; }
 
         .card-body {
             margin-top: 14px;
@@ -121,7 +164,7 @@
 
         .card.open .card-body { display: block; }
 
-        /* Rankings table */
+        /* Rankings */
         .ranking-row {
             display: flex;
             align-items: center;
@@ -194,14 +237,8 @@
         }
 
         .game-row:last-child { border-bottom: none; }
-
-        .game-name { flex: 1; font-weight: 600; }
-
-        .game-rank {
-            font-size: 0.8rem;
-            color: var(--text-muted);
-            white-space: nowrap;
-        }
+        .game-name { flex: 1; font-weight: 600; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .game-rank { font-size: 0.8rem; color: var(--text-muted); white-space: nowrap; }
 
         .empty-state {
             text-align: center;
@@ -231,7 +268,10 @@
 <body>
     <div class="top-bar">
         <h1>📊 Stats</h1>
-        <a href="index.html" class="ghost-btn">← Scoreboard</a>
+        <div class="top-bar-right">
+            <span class="admin-badge">🔑 Admin mode</span>
+            <a href="index.html" class="ghost-btn">← Scoreboard</a>
+        </div>
     </div>
 
     <div class="tabs">
@@ -253,7 +293,12 @@
     </div>
 
     <script type="module">
-        import { db, ref, onValue } from './firebase-config.js';
+        import { db, ref, onValue, remove, auth, onAuthStateChanged } from './firebase-config.js';
+
+        /* ── Auth state → admin mode ── */
+        onAuthStateChanged(auth, (user) => {
+            document.body.classList.toggle('is-admin', !!user);
+        });
 
         window.switchTab = function(tab) {
             document.getElementById('tab-games').style.display = tab === 'games' ? 'block' : 'none';
@@ -266,6 +311,13 @@
             if (!ts) return '';
             const d = new Date(ts);
             return d.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
+        }
+
+        function escapeHtml(str) {
+            return String(str)
+                .replace(/&/g, '&amp;').replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;').replace(/"/g, '&quot;')
+                .replace(/'/g, '&#39;');
         }
 
         /* ── Game History ── */
@@ -286,28 +338,42 @@
 
             games.forEach(game => {
                 const winner = (game.players || []).find(p => p.rank === 1);
+
                 const card = document.createElement('div');
                 card.className = 'card';
 
-                card.innerHTML = `
-                    <div class="card-header">
-                        <div>
-                            <div class="card-title">${escapeHtml(game.gameName)}</div>
-                            <div class="card-subtitle">🏆 ${winner ? escapeHtml(winner.name) : '—'} &nbsp;·&nbsp; ${game.players ? game.players.length : 0} players</div>
-                        </div>
-                        <div class="card-meta">${formatDate(game.endedAt)}</div>
+                const header = document.createElement('div');
+                header.className = 'card-header';
+                header.innerHTML = `
+                    <div class="card-header-left">
+                        <div class="card-title">${escapeHtml(game.gameName)}</div>
+                        <div class="card-subtitle">🏆 ${winner ? escapeHtml(winner.name) : '—'} &nbsp;·&nbsp; ${game.players ? game.players.length : 0} players</div>
                     </div>
-                    <div class="card-body" id="game-body-${game.id}">
-                        ${renderRankings(game.players || [], game.rankingOrder)}
+                    <div class="card-header-right">
+                        <span class="card-meta">${formatDate(game.endedAt)}</span>
+                        <button class="delete-btn" title="Delete this game">🗑️</button>
                     </div>
                 `;
 
+                const deleteBtn = header.querySelector('.delete-btn');
+                deleteBtn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    if (!confirm(`Delete "${game.gameName}" from history?\nThis cannot be undone.`)) return;
+                    remove(ref(db, `gameHistory/${game.id}`));
+                });
+
+                const body = document.createElement('div');
+                body.className = 'card-body';
+                body.innerHTML = renderRankings(game.players || []);
+
+                card.appendChild(header);
+                card.appendChild(body);
                 card.addEventListener('click', () => card.classList.toggle('open'));
                 container.appendChild(card);
             });
         });
 
-        function renderRankings(players, rankingOrder) {
+        function renderRankings(players) {
             const sorted = [...players].sort((a, b) => a.rank - b.rank);
             return sorted.map(p => `
                 <div class="ranking-row rank-${p.rank}">
@@ -320,7 +386,7 @@
         }
 
         /* ── Player Records ── */
-        let allPlayers = [];
+        let allPlayersData = [];
 
         onValue(ref(db, 'playerRecords'), (snapshot) => {
             document.getElementById('players-loading').style.display = 'none';
@@ -333,8 +399,11 @@
                 return;
             }
 
-            allPlayers = Object.values(data).sort((a, b) => a.name.localeCompare(b.name));
-            renderPlayers(allPlayers);
+            allPlayersData = Object.entries(data)
+                .map(([key, p]) => ({ key, ...p }))
+                .sort((a, b) => a.name.localeCompare(b.name));
+
+            renderPlayers(allPlayersData);
         });
 
         function renderPlayers(players) {
@@ -347,7 +416,9 @@
             }
 
             players.forEach(player => {
-                const games = player.games ? Object.entries(player.games).map(([id, g]) => ({ id, ...g })) : [];
+                const games = player.games
+                    ? Object.entries(player.games).map(([id, g]) => ({ id, ...g }))
+                    : [];
                 games.sort((a, b) => (b.endedAt || 0) - (a.endedAt || 0));
 
                 const totalGames = games.length;
@@ -355,9 +426,6 @@
                 const avgScore = totalGames > 0
                     ? Math.round(games.reduce((sum, g) => sum + (g.score || 0), 0) / totalGames)
                     : 0;
-
-                const card = document.createElement('div');
-                card.className = 'card';
 
                 const gameRows = games.map(g => `
                     <div class="game-row">
@@ -369,33 +437,51 @@
                     </div>
                 `).join('') || '<div style="color:var(--text-muted);font-size:0.85rem;padding:8px 0;">No game history.</div>';
 
-                card.innerHTML = `
-                    <div class="card-header">
-                        <div>
-                            <div class="card-title">${escapeHtml(player.name)}</div>
-                            <div class="card-subtitle">${totalGames} game${totalGames !== 1 ? 's' : ''} played</div>
-                        </div>
-                        <div class="card-meta">${wins} win${wins !== 1 ? 's' : ''}</div>
+                const card = document.createElement('div');
+                card.className = 'card';
+
+                const header = document.createElement('div');
+                header.className = 'card-header';
+                header.innerHTML = `
+                    <div class="card-header-left">
+                        <div class="card-title">${escapeHtml(player.name)}</div>
+                        <div class="card-subtitle">${totalGames} game${totalGames !== 1 ? 's' : ''} played</div>
                     </div>
-                    <div class="card-body">
-                        <div class="stat-grid">
-                            <div class="stat-box">
-                                <div class="stat-value">${totalGames}</div>
-                                <div class="stat-label">Games</div>
-                            </div>
-                            <div class="stat-box">
-                                <div class="stat-value">${wins}</div>
-                                <div class="stat-label">Wins</div>
-                            </div>
-                            <div class="stat-box">
-                                <div class="stat-value">${avgScore}</div>
-                                <div class="stat-label">Avg Score</div>
-                            </div>
-                        </div>
-                        <div>${gameRows}</div>
+                    <div class="card-header-right">
+                        <span class="card-meta">${wins} win${wins !== 1 ? 's' : ''}</span>
+                        <button class="delete-btn" title="Delete this player">🗑️</button>
                     </div>
                 `;
 
+                const deleteBtn = header.querySelector('.delete-btn');
+                deleteBtn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    if (!confirm(`Delete all stats for "${player.name}"?\nThis cannot be undone.`)) return;
+                    remove(ref(db, `playerRecords/${player.key}`));
+                });
+
+                const body = document.createElement('div');
+                body.className = 'card-body';
+                body.innerHTML = `
+                    <div class="stat-grid">
+                        <div class="stat-box">
+                            <div class="stat-value">${totalGames}</div>
+                            <div class="stat-label">Games</div>
+                        </div>
+                        <div class="stat-box">
+                            <div class="stat-value">${wins}</div>
+                            <div class="stat-label">Wins</div>
+                        </div>
+                        <div class="stat-box">
+                            <div class="stat-value">${avgScore}</div>
+                            <div class="stat-label">Avg Score</div>
+                        </div>
+                    </div>
+                    <div>${gameRows}</div>
+                `;
+
+                card.appendChild(header);
+                card.appendChild(body);
                 card.addEventListener('click', () => card.classList.toggle('open'));
                 container.appendChild(card);
             });
@@ -403,15 +489,8 @@
 
         document.getElementById('player-search').addEventListener('input', (e) => {
             const q = e.target.value.toLowerCase();
-            renderPlayers(allPlayers.filter(p => p.name.toLowerCase().includes(q)));
+            renderPlayers(allPlayersData.filter(p => p.name.toLowerCase().includes(q)));
         });
-
-        function escapeHtml(str) {
-            return String(str)
-                .replace(/&/g, '&amp;').replace(/</g, '&lt;')
-                .replace(/>/g, '&gt;').replace(/"/g, '&quot;')
-                .replace(/'/g, '&#39;');
-        }
     </script>
 </body>
 </html>
