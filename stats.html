@@ -246,6 +246,10 @@
         .game-row:last-child { border-bottom: none; }
         .game-name { flex: 1; font-weight: 600; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
         .game-rank { font-size: 0.8rem; color: var(--text-muted); white-space: nowrap; }
+        .game-winner {
+            margin-top: 4px;
+            display: inline-flex;
+        }
 
         .empty-state {
             text-align: center;
@@ -369,6 +373,27 @@
             font-size: 0.78rem;
             color: var(--text-muted);
             white-space: nowrap;
+        }
+
+        @media (max-width: 480px) {
+            .game-row {
+                flex-wrap: wrap;
+                align-items: flex-start;
+            }
+
+            .game-row .game-name {
+                flex: 1 1 100%;
+            }
+
+            .game-row .game-rank,
+            .game-row .rank-score,
+            .game-row .game-time {
+                margin-top: 4px;
+            }
+
+            .game-row .game-winner {
+                flex-basis: 100%;
+            }
         }
     </style>
 </head>
@@ -651,7 +676,7 @@
                 const gameRows = games.map(g => `
                     <div class="game-row">
                         <span class="game-name">${escapeHtml(g.gameName)}</span>
-                        ${g.won ? `<span class="won-badge">${escapeHtml(g.winnerLabel || 'Won')}</span>` : ''}
+                        ${g.won ? `<span class="won-badge game-winner">${escapeHtml(g.winnerLabel || 'Won')}</span>` : ''}
                         <span class="game-rank">#${g.rank} of ${g.totalPlayers}</span>
                         <span class="rank-score">${g.score} pts</span>
                         <span style="font-size:0.75rem;color:var(--text-muted);white-space:nowrap;">${formatDate(g.endedAt)}</span>
