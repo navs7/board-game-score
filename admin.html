@@ -193,6 +193,12 @@
             align-items: center;
         }
 
+        .controls input[type="number"] {
+            width: 72px;
+            font-size: 1rem;
+            padding: 8px 8px;
+        }
+
         .small-text {
             font-size: 0.72rem;
             color: var(--text-muted);
@@ -221,6 +227,12 @@
             padding: 10px 14px;
             white-space: nowrap;
             font-size: 0.85rem;
+        }
+
+        .btn-row-3 {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 10px;
         }
 
         .copy-feedback {
@@ -264,6 +276,22 @@
             text-align: center;
             margin-top: 8px;
             min-height: 1.2em;
+        }
+
+        @media (max-width: 480px) {
+            input[type="number"] {
+                width: 84px;
+                font-size: 1.05rem;
+                padding: 10px 10px;
+            }
+
+            .controls input[type="number"] {
+                width: 84px;
+            }
+
+            .btn-row-3 {
+                grid-template-columns: 1fr;
+            }
         }
 
         #login-section { margin-top: 60px; max-width: 420px; margin-left: auto; margin-right: auto; }
@@ -379,9 +407,10 @@
             <div id="playersContainer"></div>
 
             <div class="panel" style="margin-top:12px;">
-                <div class="btn-row">
+                <div class="btn-row-3">
                     <button class="btn btn-warning" id="resetScoresBtn">↺ Reset Scores</button>
                     <button class="btn btn-danger" id="endGameBtn">✓ End &amp; Save Game</button>
+                    <button class="btn btn-danger" id="abandonGameBtn">✕ Abandon Game</button>
                 </div>
             </div>
         </div>
@@ -691,6 +720,12 @@
 
             await set(gameRef, data);
             input.value = '';
+            const playerIds = Object.keys(data.players || {});
+            const nextPlayerId = playerIds[playerIds.indexOf(playerId) + 1];
+            if (nextPlayerId) {
+                const nextInput = document.getElementById(`score_${nextPlayerId}`);
+                if (nextInput) nextInput.focus();
+            }
         };
 
         window.undoScore = async (playerId) => {
@@ -701,6 +736,15 @@
             player.totalScore -= player.history.pop();
             set(gameRef, data);
         };
+
+        document.getElementById('abandonGameBtn').addEventListener('click', async () => {
+            if (!confirm('Abandon this game without saving it?')) return;
+            await set(gameRef, { gameStatus: 'ended' });
+            document.getElementById('gameName').value = '';
+            document.getElementById('playerNames').value = '';
+            syncPlayerChipsFromInput();
+            syncGameChipFromInput();
+        });
     </script>
 </body>
 </html>
