@@ -1,0 +1,417 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Stats - Score Tracker</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;800&display=swap');
+
+        :root {
+            --bg-color: #0f172a;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --card-bg: #1e293b;
+            --border: #334155;
+            --primary: #3b82f6;
+            --success: #22c55e;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            padding: 20px;
+            max-width: 640px;
+            margin: auto;
+        }
+
+        .top-bar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 24px;
+            margin-top: 10px;
+        }
+
+        .top-bar h1 { font-size: 1.5rem; }
+
+        .ghost-btn {
+            cursor: pointer;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 6px 14px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            background: transparent;
+            color: var(--text-muted);
+            text-decoration: none;
+            transition: color 0.2s, border-color 0.2s;
+            display: inline-block;
+        }
+
+        .ghost-btn:hover { color: var(--text-main); border-color: var(--text-muted); }
+
+        /* Tabs */
+        .tabs {
+            display: flex;
+            gap: 4px;
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 4px;
+            margin-bottom: 24px;
+        }
+
+        .tab-btn {
+            flex: 1;
+            cursor: pointer;
+            padding: 8px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            border: none;
+            border-radius: 7px;
+            background: transparent;
+            color: var(--text-muted);
+            transition: background 0.2s, color 0.2s;
+        }
+
+        .tab-btn.active { background: var(--primary); color: white; }
+
+        /* Cards */
+        .card {
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 14px;
+            cursor: pointer;
+            transition: border-color 0.2s;
+        }
+
+        .card:hover { border-color: var(--primary); }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 10px;
+        }
+
+        .card-title { font-weight: 700; font-size: 1rem; }
+        .card-subtitle { font-size: 0.8rem; color: var(--text-muted); margin-top: 3px; }
+
+        .card-meta {
+            text-align: right;
+            flex-shrink: 0;
+            font-size: 0.82rem;
+            color: var(--text-muted);
+        }
+
+        .card-body {
+            margin-top: 14px;
+            display: none;
+            border-top: 1px solid var(--border);
+            padding-top: 12px;
+        }
+
+        .card.open .card-body { display: block; }
+
+        /* Rankings table */
+        .ranking-row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 7px 0;
+            border-bottom: 1px solid var(--border);
+            font-size: 0.9rem;
+        }
+
+        .ranking-row:last-child { border-bottom: none; }
+
+        .rank-badge {
+            font-weight: 800;
+            font-size: 1rem;
+            min-width: 26px;
+            text-align: center;
+            color: var(--text-muted);
+        }
+
+        .rank-1 .rank-badge { color: #fbbf24; }
+        .rank-2 .rank-badge { color: #94a3b8; }
+        .rank-3 .rank-badge { color: #cd7c2f; }
+
+        .rank-name { flex: 1; font-weight: 600; }
+
+        .rank-score {
+            font-size: 0.88rem;
+            background: rgba(255,255,255,0.08);
+            padding: 3px 10px;
+            border-radius: 20px;
+        }
+
+        .won-badge {
+            font-size: 0.72rem;
+            background: rgba(34,197,94,0.15);
+            color: var(--success);
+            border: 1px solid var(--success);
+            padding: 2px 7px;
+            border-radius: 20px;
+            font-weight: 600;
+        }
+
+        /* Player stats */
+        .stat-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            margin-bottom: 14px;
+        }
+
+        .stat-box {
+            background: rgba(255,255,255,0.04);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 10px;
+            text-align: center;
+        }
+
+        .stat-value { font-size: 1.4rem; font-weight: 800; color: var(--primary); }
+        .stat-label { font-size: 0.72rem; color: var(--text-muted); margin-top: 2px; }
+
+        .game-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 8px 0;
+            border-bottom: 1px solid var(--border);
+            font-size: 0.88rem;
+            gap: 8px;
+        }
+
+        .game-row:last-child { border-bottom: none; }
+
+        .game-name { flex: 1; font-weight: 600; }
+
+        .game-rank {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            white-space: nowrap;
+        }
+
+        .empty-state {
+            text-align: center;
+            color: var(--text-muted);
+            padding: 40px 20px;
+            font-size: 0.95rem;
+        }
+
+        .loading { text-align: center; color: var(--text-muted); padding: 30px; }
+
+        .search-input {
+            width: 100%;
+            padding: 10px 12px;
+            margin-bottom: 16px;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            font-size: 0.95rem;
+            font-family: 'Inter', sans-serif;
+            background: var(--card-bg);
+            color: var(--text-main);
+        }
+
+        .search-input::placeholder { color: var(--text-muted); }
+        .search-input:focus { outline: none; border-color: var(--primary); }
+    </style>
+</head>
+<body>
+    <div class="top-bar">
+        <h1>📊 Stats</h1>
+        <a href="admin.html" class="ghost-btn">← Admin</a>
+    </div>
+
+    <div class="tabs">
+        <button class="tab-btn active" id="tab-games-btn" onclick="switchTab('games')">🎮 Game History</button>
+        <button class="tab-btn" id="tab-players-btn" onclick="switchTab('players')">👤 Player Records</button>
+    </div>
+
+    <!-- Games tab -->
+    <div id="tab-games">
+        <div class="loading" id="games-loading">Loading games...</div>
+        <div id="games-list"></div>
+    </div>
+
+    <!-- Players tab -->
+    <div id="tab-players" style="display:none;">
+        <input type="text" class="search-input" id="player-search" placeholder="Search players...">
+        <div class="loading" id="players-loading">Loading players...</div>
+        <div id="players-list"></div>
+    </div>
+
+    <script type="module">
+        import { db, ref, onValue } from './firebase-config.js';
+
+        window.switchTab = function(tab) {
+            document.getElementById('tab-games').style.display = tab === 'games' ? 'block' : 'none';
+            document.getElementById('tab-players').style.display = tab === 'players' ? 'block' : 'none';
+            document.getElementById('tab-games-btn').classList.toggle('active', tab === 'games');
+            document.getElementById('tab-players-btn').classList.toggle('active', tab === 'players');
+        };
+
+        function formatDate(ts) {
+            if (!ts) return '';
+            const d = new Date(ts);
+            return d.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
+        }
+
+        /* ── Game History ── */
+        onValue(ref(db, 'gameHistory'), (snapshot) => {
+            document.getElementById('games-loading').style.display = 'none';
+            const data = snapshot.val();
+            const container = document.getElementById('games-list');
+            container.innerHTML = '';
+
+            if (!data) {
+                container.innerHTML = '<div class="empty-state">No completed games yet.<br>End a game in the admin panel to save it here.</div>';
+                return;
+            }
+
+            const games = Object.entries(data)
+                .map(([id, g]) => ({ id, ...g }))
+                .sort((a, b) => (b.endedAt || 0) - (a.endedAt || 0));
+
+            games.forEach(game => {
+                const winner = (game.players || []).find(p => p.rank === 1);
+                const card = document.createElement('div');
+                card.className = 'card';
+
+                card.innerHTML = `
+                    <div class="card-header">
+                        <div>
+                            <div class="card-title">${escapeHtml(game.gameName)}</div>
+                            <div class="card-subtitle">🏆 ${winner ? escapeHtml(winner.name) : '—'} &nbsp;·&nbsp; ${game.players ? game.players.length : 0} players</div>
+                        </div>
+                        <div class="card-meta">${formatDate(game.endedAt)}</div>
+                    </div>
+                    <div class="card-body" id="game-body-${game.id}">
+                        ${renderRankings(game.players || [], game.rankingOrder)}
+                    </div>
+                `;
+
+                card.addEventListener('click', () => card.classList.toggle('open'));
+                container.appendChild(card);
+            });
+        });
+
+        function renderRankings(players, rankingOrder) {
+            const sorted = [...players].sort((a, b) => a.rank - b.rank);
+            return sorted.map(p => `
+                <div class="ranking-row rank-${p.rank}">
+                    <span class="rank-badge">#${p.rank}</span>
+                    <span class="rank-name">${escapeHtml(p.name)}</span>
+                    ${p.won ? '<span class="won-badge">Winner</span>' : ''}
+                    <span class="rank-score">${p.totalScore} pts</span>
+                </div>
+            `).join('');
+        }
+
+        /* ── Player Records ── */
+        let allPlayers = [];
+
+        onValue(ref(db, 'playerRecords'), (snapshot) => {
+            document.getElementById('players-loading').style.display = 'none';
+            const data = snapshot.val();
+            const container = document.getElementById('players-list');
+            container.innerHTML = '';
+
+            if (!data) {
+                container.innerHTML = '<div class="empty-state">No player records yet.<br>Complete a game to start tracking players.</div>';
+                return;
+            }
+
+            allPlayers = Object.values(data).sort((a, b) => a.name.localeCompare(b.name));
+            renderPlayers(allPlayers);
+        });
+
+        function renderPlayers(players) {
+            const container = document.getElementById('players-list');
+            container.innerHTML = '';
+
+            if (players.length === 0) {
+                container.innerHTML = '<div class="empty-state">No players match your search.</div>';
+                return;
+            }
+
+            players.forEach(player => {
+                const games = player.games ? Object.entries(player.games).map(([id, g]) => ({ id, ...g })) : [];
+                games.sort((a, b) => (b.endedAt || 0) - (a.endedAt || 0));
+
+                const totalGames = games.length;
+                const wins = games.filter(g => g.won).length;
+                const avgScore = totalGames > 0
+                    ? Math.round(games.reduce((sum, g) => sum + (g.score || 0), 0) / totalGames)
+                    : 0;
+
+                const card = document.createElement('div');
+                card.className = 'card';
+
+                const gameRows = games.map(g => `
+                    <div class="game-row">
+                        <span class="game-name">${escapeHtml(g.gameName)}</span>
+                        ${g.won ? '<span class="won-badge">Won</span>' : ''}
+                        <span class="game-rank">#${g.rank} of ${g.totalPlayers}</span>
+                        <span class="rank-score">${g.score} pts</span>
+                        <span style="font-size:0.75rem;color:var(--text-muted);white-space:nowrap;">${formatDate(g.endedAt)}</span>
+                    </div>
+                `).join('') || '<div style="color:var(--text-muted);font-size:0.85rem;padding:8px 0;">No game history.</div>';
+
+                card.innerHTML = `
+                    <div class="card-header">
+                        <div>
+                            <div class="card-title">${escapeHtml(player.name)}</div>
+                            <div class="card-subtitle">${totalGames} game${totalGames !== 1 ? 's' : ''} played</div>
+                        </div>
+                        <div class="card-meta">${wins} win${wins !== 1 ? 's' : ''}</div>
+                    </div>
+                    <div class="card-body">
+                        <div class="stat-grid">
+                            <div class="stat-box">
+                                <div class="stat-value">${totalGames}</div>
+                                <div class="stat-label">Games</div>
+                            </div>
+                            <div class="stat-box">
+                                <div class="stat-value">${wins}</div>
+                                <div class="stat-label">Wins</div>
+                            </div>
+                            <div class="stat-box">
+                                <div class="stat-value">${avgScore}</div>
+                                <div class="stat-label">Avg Score</div>
+                            </div>
+                        </div>
+                        <div>${gameRows}</div>
+                    </div>
+                `;
+
+                card.addEventListener('click', () => card.classList.toggle('open'));
+                container.appendChild(card);
+            });
+        }
+
+        document.getElementById('player-search').addEventListener('input', (e) => {
+            const q = e.target.value.toLowerCase();
+            renderPlayers(allPlayers.filter(p => p.name.toLowerCase().includes(q)));
+        });
+
+        function escapeHtml(str) {
+            return String(str)
+                .replace(/&/g, '&amp;').replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;').replace(/"/g, '&quot;')
+                .replace(/'/g, '&#39;');
+        }
+    </script>
+</body>
+</html>

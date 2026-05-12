@@ -19,6 +19,8 @@
             --danger-hover: #dc2626;
             --success: #22c55e;
             --success-hover: #16a34a;
+            --warning: #f59e0b;
+            --warning-hover: #d97706;
         }
 
         * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -67,14 +69,16 @@
         input[type="password"]:focus { outline: none; border-color: var(--primary); }
 
         input[type="number"] {
-            padding: 7px 10px;
+            padding: 7px 8px;
             border: 1px solid var(--border);
             border-radius: 8px;
             font-size: 0.95rem;
             font-family: 'Inter', sans-serif;
             background: #0f172a;
             color: var(--text-main);
-            width: 100%;
+            width: 75px;
+            flex-shrink: 0;
+            text-align: center;
         }
 
         input[type="number"]::placeholder { color: var(--text-muted); }
@@ -114,36 +118,34 @@
         .btn-danger:hover { background-color: var(--danger-hover); }
         .btn-success { background-color: var(--success); }
         .btn-success:hover { background-color: var(--success-hover); }
+        .btn-warning { background-color: var(--warning); color: #1a1a1a; }
+        .btn-warning:hover { background-color: var(--warning-hover); }
+
+        .btn-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
 
         .btn-icon {
             cursor: pointer;
             border: none;
             border-radius: 8px;
-            width: 36px;
-            height: 36px;
+            width: 34px;
+            height: 34px;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 1.1rem;
+            font-size: 1.05rem;
             transition: background-color 0.2s, transform 0.1s;
             flex-shrink: 0;
         }
 
         .btn-icon:hover { transform: scale(1.1); }
         .btn-icon:active { transform: scale(0.95); }
-
-        .btn-icon-add {
-            background-color: var(--primary);
-            color: white;
-        }
-
+        .btn-icon-add { background-color: var(--primary); color: white; }
         .btn-icon-add:hover { background-color: var(--primary-hover); }
-
-        .btn-icon-undo {
-            background-color: var(--danger);
-            color: white;
-        }
-
+        .btn-icon-undo { background-color: var(--danger); color: white; }
         .btn-icon-undo:hover { background-color: var(--danger-hover); }
 
         .player-card {
@@ -168,15 +170,21 @@
             align-items: center;
         }
 
-        .controls input[type="number"] {
+        .controls span {
             flex: 1;
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
         }
 
         .small-text {
-            font-size: 0.8rem;
+            font-size: 0.78rem;
             color: var(--text-muted);
             display: block;
             margin-top: 10px;
+            word-break: break-all;
         }
 
         .share-bar {
@@ -187,15 +195,16 @@
 
         .share-bar input[type="text"] {
             margin-bottom: 0;
-            font-size: 0.85rem;
+            font-size: 0.82rem;
             color: var(--text-muted);
             flex: 1;
         }
 
         .share-bar .btn {
             width: auto;
-            padding: 10px 16px;
+            padding: 10px 14px;
             white-space: nowrap;
+            font-size: 0.85rem;
         }
 
         .copy-feedback {
@@ -211,23 +220,28 @@
             justify-content: space-between;
             align-items: center;
             margin-bottom: 16px;
+            gap: 10px;
         }
 
-        .top-bar h2 { margin-bottom: 0; }
+        .top-bar h1 { margin: 0; font-size: 1.4rem; }
 
-        .signout-btn {
+        .top-bar-actions { display: flex; gap: 8px; }
+
+        .ghost-btn {
             cursor: pointer;
             border: 1px solid var(--border);
             border-radius: 8px;
             padding: 6px 12px;
-            font-size: 0.85rem;
+            font-size: 0.82rem;
             font-weight: 600;
             background: transparent;
             color: var(--text-muted);
             transition: color 0.2s, border-color 0.2s;
+            white-space: nowrap;
         }
 
-        .signout-btn:hover { color: var(--danger); border-color: var(--danger); }
+        .ghost-btn:hover { color: var(--text-main); border-color: var(--text-muted); }
+        .ghost-btn.danger:hover { color: var(--danger); border-color: var(--danger); }
 
         .error-msg {
             color: var(--danger);
@@ -237,7 +251,6 @@
             min-height: 1.2em;
         }
 
-        /* Login screen */
         #login-section { margin-top: 60px; }
         #login-section h1 { margin-bottom: 8px; }
         #login-section .subtitle {
@@ -246,6 +259,36 @@
             font-size: 0.9rem;
             margin-bottom: 24px;
         }
+
+        /* Known players chips */
+        .chips-label {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            margin-bottom: 8px;
+        }
+
+        .chips-wrap {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 7px;
+            margin-bottom: 16px;
+        }
+
+        .chip {
+            cursor: pointer;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.82rem;
+            font-weight: 600;
+            background: #0f172a;
+            border: 1px solid var(--border);
+            color: var(--text-muted);
+            transition: border-color 0.15s, color 0.15s;
+            user-select: none;
+        }
+
+        .chip:hover { border-color: var(--primary); color: var(--primary); }
+        .chip.selected { border-color: var(--primary); color: var(--primary); background: rgba(59,130,246,0.1); }
     </style>
 </head>
 <body>
@@ -264,17 +307,28 @@
         </div>
     </div>
 
-    <!-- Admin (shown when authenticated) -->
+    <!-- Admin -->
     <div id="admin-section" style="display:none;">
         <div class="top-bar">
-            <h1 style="margin:0;">Game Admin Panel</h1>
-            <button class="signout-btn" id="signOutBtn">Sign out</button>
+            <h1>Game Admin Panel</h1>
+            <div class="top-bar-actions">
+                <a href="stats.html" style="text-decoration:none;"><button class="ghost-btn">📊 Stats</button></a>
+                <button class="ghost-btn danger" id="signOutBtn">Sign out</button>
+            </div>
         </div>
 
+        <!-- New game -->
         <div id="new-game-section" class="panel">
             <h3>Create New Game</h3>
             <input type="text" id="gameName" placeholder="Game Name (e.g., Catan)">
-            <input type="text" id="playerNames" placeholder="Player Names (comma separated)">
+
+            <div id="knownPlayersSection" style="display:none;">
+                <div class="chips-label">Known players — tap to add:</div>
+                <div class="chips-wrap" id="knownPlayerChips"></div>
+            </div>
+
+            <input type="text" id="playerNames" placeholder="Player names (comma separated)">
+
             <div class="radio-group">
                 <label><input type="radio" name="rankingOrder" value="highest" checked> Highest Score Wins</label>
                 <label><input type="radio" name="rankingOrder" value="lowest"> Lowest Score Wins</label>
@@ -282,6 +336,7 @@
             <button class="btn" id="startGameBtn">Start New Game</button>
         </div>
 
+        <!-- Active game -->
         <div id="active-game-section" style="display:none;">
             <h2 id="activeGameTitle"></h2>
 
@@ -296,14 +351,17 @@
             <div id="playersContainer"></div>
 
             <div class="panel">
-                <button class="btn btn-danger" id="endGameBtn">End Game &amp; Start New</button>
+                <div class="btn-row">
+                    <button class="btn btn-warning" id="resetScoresBtn">↺ Reset Scores</button>
+                    <button class="btn btn-danger" id="endGameBtn">✓ End &amp; Save Game</button>
+                </div>
             </div>
         </div>
     </div>
 
     <script type="module">
         import {
-            db, ref, set, onValue, get,
+            db, ref, set, onValue, get, push,
             auth, signInWithEmailAndPassword, signOut, onAuthStateChanged
         } from './firebase-config.js';
 
@@ -318,18 +376,22 @@
                 .replace(/'/g, '&#39;');
         }
 
-        /* ── Auth state ── */
+        function sanitizeKey(name) {
+            return name.toLowerCase().replace(/[.#$[\]/\s]/g, '_');
+        }
+
+        /* ── Auth ── */
         onAuthStateChanged(auth, (user) => {
             if (user) {
                 document.getElementById('login-section').style.display = 'none';
                 document.getElementById('admin-section').style.display = 'block';
+                loadKnownPlayers();
             } else {
                 document.getElementById('login-section').style.display = 'block';
                 document.getElementById('admin-section').style.display = 'none';
             }
         });
 
-        /* ── Login ── */
         async function doLogin() {
             const email = document.getElementById('loginEmail').value.trim();
             const password = document.getElementById('loginPassword').value;
@@ -344,9 +406,58 @@
 
         document.getElementById('loginBtn').addEventListener('click', doLogin);
         document.getElementById('loginForm').addEventListener('submit', doLogin);
-
-        /* ── Sign out ── */
         document.getElementById('signOutBtn').addEventListener('click', () => signOut(auth));
+
+        /* ── Known players suggestions ── */
+        function loadKnownPlayers() {
+            const playerRecordsRef = ref(db, 'playerRecords');
+            onValue(playerRecordsRef, (snapshot) => {
+                const data = snapshot.val();
+                const chipsWrap = document.getElementById('knownPlayerChips');
+                const section = document.getElementById('knownPlayersSection');
+                chipsWrap.innerHTML = '';
+                if (!data) { section.style.display = 'none'; return; }
+
+                const names = Object.values(data).map(p => p.name).sort();
+                if (names.length === 0) { section.style.display = 'none'; return; }
+
+                section.style.display = 'block';
+                names.forEach(name => {
+                    const chip = document.createElement('div');
+                    chip.className = 'chip';
+                    chip.textContent = name;
+                    chip.addEventListener('click', () => togglePlayerChip(chip, name));
+                    chipsWrap.appendChild(chip);
+                });
+                syncChipsFromInput();
+            });
+        }
+
+        function getSelectedNames() {
+            return document.getElementById('playerNames').value
+                .split(',').map(n => n.trim()).filter(n => n.length > 0);
+        }
+
+        function syncChipsFromInput() {
+            const selected = new Set(getSelectedNames());
+            document.querySelectorAll('#knownPlayerChips .chip').forEach(chip => {
+                chip.classList.toggle('selected', selected.has(chip.textContent));
+            });
+        }
+
+        function togglePlayerChip(chip, name) {
+            let names = getSelectedNames();
+            const idx = names.indexOf(name);
+            if (idx === -1) {
+                names.push(name);
+            } else {
+                names.splice(idx, 1);
+            }
+            document.getElementById('playerNames').value = names.join(', ');
+            syncChipsFromInput();
+        }
+
+        document.getElementById('playerNames').addEventListener('input', syncChipsFromInput);
 
         /* ── Copy link ── */
         document.getElementById('copyLinkBtn').addEventListener('click', () => {
@@ -360,8 +471,7 @@
         /* ── Start game ── */
         document.getElementById('startGameBtn').addEventListener('click', () => {
             const gameName = document.getElementById('gameName').value.trim();
-            const names = document.getElementById('playerNames').value
-                .split(',').map(n => n.trim()).filter(n => n.length > 0);
+            const names = getSelectedNames();
             const rankingOrder = document.querySelector('input[name="rankingOrder"]:checked').value;
 
             if (!gameName) { alert('Please enter a game name.'); return; }
@@ -372,15 +482,78 @@
                 playersData[`player_${index}`] = { name, totalScore: 0, history: [] };
             });
 
-            set(gameRef, { gameStatus: "active", gameName, rankingOrder, players: playersData });
+            set(gameRef, { gameStatus: "active", gameName, rankingOrder, players: playersData, startedAt: Date.now() });
         });
 
-        /* ── End game ── */
-        document.getElementById('endGameBtn').addEventListener('click', () => {
-            if (!confirm('Are you sure you want to end the current game?')) return;
-            set(gameRef, { gameStatus: "ended" });
+        /* ── Reset scores ── */
+        document.getElementById('resetScoresBtn').addEventListener('click', async () => {
+            if (!confirm('Reset all scores to 0? This cannot be undone.')) return;
+            const snapshot = await get(gameRef);
+            const data = snapshot.val();
+            Object.keys(data.players).forEach(pid => {
+                data.players[pid].totalScore = 0;
+                data.players[pid].history = [];
+            });
+            set(gameRef, data);
+        });
+
+        /* ── End game & save ── */
+        document.getElementById('endGameBtn').addEventListener('click', async () => {
+            if (!confirm('End this game and save final scores to history?')) return;
+
+            const snapshot = await get(gameRef);
+            const data = snapshot.val();
+            if (!data || data.gameStatus !== 'active') return;
+
+            const endedAt = Date.now();
+
+            const playersArray = Object.values(data.players);
+            playersArray.sort((a, b) =>
+                data.rankingOrder === 'highest'
+                    ? b.totalScore - a.totalScore
+                    : a.totalScore - b.totalScore
+            );
+
+            const rankedPlayers = playersArray.map((p, i) => ({
+                name: p.name,
+                totalScore: p.totalScore,
+                rank: i + 1,
+                won: i === 0
+            }));
+
+            const historyRef = ref(db, 'gameHistory');
+            const newGameRef = push(historyRef);
+            const gameId = newGameRef.key;
+
+            await set(newGameRef, {
+                gameName: data.gameName,
+                rankingOrder: data.rankingOrder,
+                endedAt,
+                players: rankedPlayers
+            });
+
+            for (const rp of rankedPlayers) {
+                const key = sanitizeKey(rp.name);
+                const prRef = ref(db, `playerRecords/${key}`);
+                const prSnap = await get(prRef);
+                const prData = prSnap.val() || { name: rp.name, games: {} };
+                prData.name = rp.name;
+                if (!prData.games) prData.games = {};
+                prData.games[gameId] = {
+                    gameName: data.gameName,
+                    score: rp.totalScore,
+                    rank: rp.rank,
+                    won: rp.won,
+                    totalPlayers: rankedPlayers.length,
+                    endedAt
+                };
+                await set(prRef, prData);
+            }
+
+            await set(gameRef, { gameStatus: "ended" });
             document.getElementById('gameName').value = '';
             document.getElementById('playerNames').value = '';
+            syncChipsFromInput();
         });
 
         /* ── Live data ── */
@@ -417,6 +590,7 @@
                                 <input type="number" id="score_${escapeHtml(playerId)}" placeholder="Score">
                                 <button class="btn-icon btn-icon-add" title="Add Score" onclick="window.addScore('${escapeHtml(playerId)}')">&#10003;</button>
                                 <button class="btn-icon btn-icon-undo" title="Undo Last" onclick="window.undoScore('${escapeHtml(playerId)}')">&#8630;</button>
+                                <span class="player-history-inline"></span>
                             </div>
                             <span class="small-text player-history"></span>
                         `;
