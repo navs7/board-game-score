@@ -30,7 +30,7 @@
             background-color: var(--bg-color);
             color: var(--text-main);
             padding: 20px;
-            max-width: 600px;
+            max-width: 700px;
             margin: auto;
         }
 
@@ -69,14 +69,14 @@
         input[type="password"]:focus { outline: none; border-color: var(--primary); }
 
         input[type="number"] {
-            padding: 7px 8px;
+            padding: 6px 6px;
             border: 1px solid var(--border);
             border-radius: 8px;
-            font-size: 0.95rem;
+            font-size: 0.9rem;
             font-family: 'Inter', sans-serif;
             background: #0f172a;
             color: var(--text-main);
-            width: 75px;
+            width: 65px;
             flex-shrink: 0;
             text-align: center;
         }
@@ -86,8 +86,7 @@
 
         .radio-group {
             display: flex;
-            flex-direction: column;
-            gap: 10px;
+            gap: 16px;
             margin-bottom: 20px;
         }
 
@@ -95,7 +94,7 @@
             display: flex;
             align-items: center;
             gap: 8px;
-            font-size: 1rem;
+            font-size: 0.95rem;
             cursor: pointer;
             color: var(--text-main);
         }
@@ -130,13 +129,13 @@
         .btn-icon {
             cursor: pointer;
             border: none;
-            border-radius: 8px;
-            width: 34px;
-            height: 34px;
+            border-radius: 7px;
+            width: 30px;
+            height: 30px;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 1.05rem;
+            font-size: 1rem;
             transition: background-color 0.2s, transform 0.1s;
             flex-shrink: 0;
         }
@@ -148,43 +147,60 @@
         .btn-icon-undo { background-color: var(--danger); color: white; }
         .btn-icon-undo:hover { background-color: var(--danger-hover); }
 
+        /* 2-column player grid */
+        #playersContainer {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-bottom: 0;
+        }
+
         .player-card {
             background: var(--card-bg);
             border: 1px solid var(--border);
-            padding: 14px 16px;
-            margin-bottom: 12px;
+            padding: 12px 14px;
             border-radius: 12px;
         }
 
         .player-header {
             display: flex;
             justify-content: space-between;
-            align-items: center;
-            font-size: 1.05rem;
-            margin-bottom: 10px;
+            align-items: baseline;
+            margin-bottom: 8px;
+            gap: 6px;
         }
 
-        .controls {
-            display: flex;
-            gap: 8px;
-            align-items: center;
-        }
-
-        .controls span {
-            flex: 1;
-            font-size: 0.8rem;
-            color: var(--text-muted);
+        .player-header .player-name {
+            font-size: 0.95rem;
+            font-weight: 700;
             overflow: hidden;
             text-overflow: ellipsis;
             white-space: nowrap;
         }
 
-        .small-text {
+        .player-total-label {
             font-size: 0.78rem;
             color: var(--text-muted);
+            white-space: nowrap;
+            flex-shrink: 0;
+        }
+
+        .player-total-label strong { color: var(--text-main); }
+
+        .controls {
+            display: flex;
+            gap: 6px;
+            align-items: center;
+        }
+
+        .small-text {
+            font-size: 0.72rem;
+            color: var(--text-muted);
             display: block;
-            margin-top: 10px;
-            word-break: break-all;
+            margin-top: 7px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
         }
 
         .share-bar {
@@ -224,7 +240,6 @@
         }
 
         .top-bar h1 { margin: 0; font-size: 1.4rem; }
-
         .top-bar-actions { display: flex; gap: 8px; }
 
         .ghost-btn {
@@ -251,7 +266,7 @@
             min-height: 1.2em;
         }
 
-        #login-section { margin-top: 60px; }
+        #login-section { margin-top: 60px; max-width: 420px; margin-left: auto; margin-right: auto; }
         #login-section h1 { margin-bottom: 8px; }
         #login-section .subtitle {
             text-align: center;
@@ -260,35 +275,42 @@
             margin-bottom: 24px;
         }
 
-        /* Known players chips */
+        /* Chips */
         .chips-label {
-            font-size: 0.8rem;
+            font-size: 0.78rem;
             color: var(--text-muted);
-            margin-bottom: 8px;
+            margin-bottom: 7px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.03em;
         }
 
         .chips-wrap {
             display: flex;
             flex-wrap: wrap;
-            gap: 7px;
-            margin-bottom: 16px;
+            gap: 6px;
+            margin-bottom: 12px;
         }
 
         .chip {
             cursor: pointer;
-            padding: 4px 12px;
+            padding: 4px 11px;
             border-radius: 20px;
-            font-size: 0.82rem;
+            font-size: 0.8rem;
             font-weight: 600;
             background: #0f172a;
             border: 1px solid var(--border);
             color: var(--text-muted);
-            transition: border-color 0.15s, color 0.15s;
+            transition: border-color 0.15s, color 0.15s, background 0.15s;
             user-select: none;
         }
 
         .chip:hover { border-color: var(--primary); color: var(--primary); }
         .chip.selected { border-color: var(--primary); color: var(--primary); background: rgba(59,130,246,0.1); }
+
+        @media (max-width: 480px) {
+            #playersContainer { grid-template-columns: 1fr; }
+        }
     </style>
 </head>
 <body>
@@ -320,6 +342,12 @@
         <!-- New game -->
         <div id="new-game-section" class="panel">
             <h3>Create New Game</h3>
+
+            <div id="knownGamesSection" style="display:none;">
+                <div class="chips-label">Recent games — tap to use name:</div>
+                <div class="chips-wrap" id="knownGameChips"></div>
+            </div>
+
             <input type="text" id="gameName" placeholder="Game Name (e.g., Catan)">
 
             <div id="knownPlayersSection" style="display:none;">
@@ -350,7 +378,7 @@
 
             <div id="playersContainer"></div>
 
-            <div class="panel">
+            <div class="panel" style="margin-top:12px;">
                 <div class="btn-row">
                     <button class="btn btn-warning" id="resetScoresBtn">↺ Reset Scores</button>
                     <button class="btn btn-danger" id="endGameBtn">✓ End &amp; Save Game</button>
@@ -386,6 +414,7 @@
                 document.getElementById('login-section').style.display = 'none';
                 document.getElementById('admin-section').style.display = 'block';
                 loadKnownPlayers();
+                loadKnownGames();
             } else {
                 document.getElementById('login-section').style.display = 'block';
                 document.getElementById('admin-section').style.display = 'none';
@@ -408,10 +437,53 @@
         document.getElementById('loginForm').addEventListener('submit', doLogin);
         document.getElementById('signOutBtn').addEventListener('click', () => signOut(auth));
 
-        /* ── Known players suggestions ── */
+        /* ── Game name suggestions ── */
+        function loadKnownGames() {
+            onValue(ref(db, 'gameHistory'), (snapshot) => {
+                const data = snapshot.val();
+                const chipsWrap = document.getElementById('knownGameChips');
+                const section = document.getElementById('knownGamesSection');
+                chipsWrap.innerHTML = '';
+
+                if (!data) { section.style.display = 'none'; return; }
+
+                const seen = new Set();
+                const names = Object.values(data)
+                    .sort((a, b) => (b.endedAt || 0) - (a.endedAt || 0))
+                    .map(g => g.gameName)
+                    .filter(n => { if (seen.has(n)) return false; seen.add(n); return true; });
+
+                if (names.length === 0) { section.style.display = 'none'; return; }
+
+                section.style.display = 'block';
+                names.forEach(name => {
+                    const chip = document.createElement('div');
+                    chip.className = 'chip';
+                    chip.textContent = name;
+                    chip.addEventListener('click', () => {
+                        document.getElementById('gameName').value = name;
+                        document.querySelectorAll('#knownGameChips .chip').forEach(c => c.classList.remove('selected'));
+                        chip.classList.add('selected');
+                    });
+                    chipsWrap.appendChild(chip);
+                });
+
+                syncGameChipFromInput();
+            });
+        }
+
+        function syncGameChipFromInput() {
+            const val = document.getElementById('gameName').value.trim();
+            document.querySelectorAll('#knownGameChips .chip').forEach(c => {
+                c.classList.toggle('selected', c.textContent === val);
+            });
+        }
+
+        document.getElementById('gameName').addEventListener('input', syncGameChipFromInput);
+
+        /* ── Player name suggestions ── */
         function loadKnownPlayers() {
-            const playerRecordsRef = ref(db, 'playerRecords');
-            onValue(playerRecordsRef, (snapshot) => {
+            onValue(ref(db, 'playerRecords'), (snapshot) => {
                 const data = snapshot.val();
                 const chipsWrap = document.getElementById('knownPlayerChips');
                 const section = document.getElementById('knownPlayersSection');
@@ -429,7 +501,7 @@
                     chip.addEventListener('click', () => togglePlayerChip(chip, name));
                     chipsWrap.appendChild(chip);
                 });
-                syncChipsFromInput();
+                syncPlayerChipsFromInput();
             });
         }
 
@@ -438,7 +510,7 @@
                 .split(',').map(n => n.trim()).filter(n => n.length > 0);
         }
 
-        function syncChipsFromInput() {
+        function syncPlayerChipsFromInput() {
             const selected = new Set(getSelectedNames());
             document.querySelectorAll('#knownPlayerChips .chip').forEach(chip => {
                 chip.classList.toggle('selected', selected.has(chip.textContent));
@@ -448,16 +520,12 @@
         function togglePlayerChip(chip, name) {
             let names = getSelectedNames();
             const idx = names.indexOf(name);
-            if (idx === -1) {
-                names.push(name);
-            } else {
-                names.splice(idx, 1);
-            }
+            if (idx === -1) { names.push(name); } else { names.splice(idx, 1); }
             document.getElementById('playerNames').value = names.join(', ');
-            syncChipsFromInput();
+            syncPlayerChipsFromInput();
         }
 
-        document.getElementById('playerNames').addEventListener('input', syncChipsFromInput);
+        document.getElementById('playerNames').addEventListener('input', syncPlayerChipsFromInput);
 
         /* ── Copy link ── */
         document.getElementById('copyLinkBtn').addEventListener('click', () => {
@@ -506,7 +574,6 @@
             if (!data || data.gameStatus !== 'active') return;
 
             const endedAt = Date.now();
-
             const playersArray = Object.values(data.players);
             playersArray.sort((a, b) =>
                 data.rankingOrder === 'highest'
@@ -515,10 +582,7 @@
             );
 
             const rankedPlayers = playersArray.map((p, i) => ({
-                name: p.name,
-                totalScore: p.totalScore,
-                rank: i + 1,
-                won: i === 0
+                name: p.name, totalScore: p.totalScore, rank: i + 1, won: i === 0
             }));
 
             const historyRef = ref(db, 'gameHistory');
@@ -553,7 +617,8 @@
             await set(gameRef, { gameStatus: "ended" });
             document.getElementById('gameName').value = '';
             document.getElementById('playerNames').value = '';
-            syncChipsFromInput();
+            syncPlayerChipsFromInput();
+            syncGameChipFromInput();
         });
 
         /* ── Live data ── */
@@ -583,14 +648,13 @@
                         card.dataset.playerId = playerId;
                         card.innerHTML = `
                             <div class="player-header">
-                                <strong class="player-name"></strong>
-                                <span style="color:var(--text-muted)">Total: <strong class="player-total" style="color:var(--text-main)"></strong></span>
+                                <span class="player-name"></span>
+                                <span class="player-total-label">Total: <strong class="player-total"></strong></span>
                             </div>
                             <div class="controls">
                                 <input type="number" id="score_${escapeHtml(playerId)}" placeholder="Score">
                                 <button class="btn-icon btn-icon-add" title="Add Score" onclick="window.addScore('${escapeHtml(playerId)}')">&#10003;</button>
                                 <button class="btn-icon btn-icon-undo" title="Undo Last" onclick="window.undoScore('${escapeHtml(playerId)}')">&#8630;</button>
-                                <span class="player-history-inline"></span>
                             </div>
                             <span class="small-text player-history"></span>
                         `;
@@ -600,7 +664,7 @@
                     card.querySelector('.player-name').textContent = player.name;
                     card.querySelector('.player-total').textContent = player.totalScore;
                     card.querySelector('.player-history').textContent =
-                        'History: ' + (history.length > 0 ? history.join(' → ') : 'No scores yet');
+                        history.length > 0 ? history.join(' → ') : 'No scores yet';
                 });
             } else {
                 document.getElementById('new-game-section').style.display = 'block';

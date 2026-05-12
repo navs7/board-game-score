@@ -13,18 +13,18 @@
             --text-main: #f8fafc;
             --text-muted: #94a3b8;
             --accent: #3b82f6;
+            --border: #334155;
         }
 
-        * {
-            box-sizing: border-box;
-        }
+        * { box-sizing: border-box; }
 
         body { 
             font-family: 'Inter', sans-serif; 
             background-color: var(--bg-color); 
             color: var(--text-main); 
             margin: 0; 
-            padding: 20px; 
+            padding: 20px;
+            min-height: 100vh;
             display: flex;
             flex-direction: column;
             align-items: center;
@@ -91,6 +91,27 @@
             background: rgba(255, 255, 255, 0.3);
         }
 
+        .footer-links {
+            margin-top: auto;
+            padding-top: 32px;
+            display: flex;
+            gap: 16px;
+            align-items: center;
+        }
+
+        .footer-link {
+            font-size: 0.82rem;
+            color: var(--text-muted);
+            text-decoration: none;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 6px 14px;
+            font-weight: 600;
+            transition: color 0.2s, border-color 0.2s;
+        }
+
+        .footer-link:hover { color: var(--accent); border-color: var(--accent); }
+
         @media (max-width: 480px) {
             h1 { font-size: 1.5rem; }
             .player-row { padding: 12px 15px; font-size: 1.1rem; }
@@ -101,6 +122,10 @@
 <body>
     <h1 id="gameTitle">Waiting for game...</h1>
     <div class="leaderboard" id="leaderboard"></div>
+
+    <div class="footer-links">
+        <a href="stats.html" class="footer-link">📊 Stats &amp; History</a>
+    </div>
 
     <script type="module">
         import { db, ref, onValue } from './firebase-config.js';
