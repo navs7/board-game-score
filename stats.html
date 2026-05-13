@@ -456,10 +456,12 @@
 
         /* ── Auth state → admin mode ── */
         const DELETE_ADMIN = '07navneet@gmail.com';
+        const fromAdmin = new URLSearchParams(window.location.search).get('from') === 'admin';
 
         onAuthStateChanged(auth, (user) => {
-            document.body.classList.toggle('is-admin', !!user);
-            document.body.classList.toggle('can-delete', !!(user && user.email === DELETE_ADMIN));
+            const isPrivileged = !!(user && user.email === DELETE_ADMIN && fromAdmin);
+            document.body.classList.toggle('is-admin', isPrivileged);
+            document.body.classList.toggle('can-delete', isPrivileged);
         });
 
         window.switchTab = function(tab) {
