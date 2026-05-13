@@ -160,7 +160,7 @@
 
         .delete-btn:hover { color: var(--danger); background: rgba(239,68,68,0.12); }
 
-        body.is-admin .delete-btn { display: inline-flex; align-items: center; }
+        body.can-delete .delete-btn { display: inline-flex; align-items: center; }
 
         .card-body {
             margin-top: 14px;
@@ -455,8 +455,11 @@
         import { db, ref, onValue, remove, auth, onAuthStateChanged } from './firebase-config.js';
 
         /* ── Auth state → admin mode ── */
+        const DELETE_ADMIN = '07navneet@gmail.com';
+
         onAuthStateChanged(auth, (user) => {
             document.body.classList.toggle('is-admin', !!user);
+            document.body.classList.toggle('can-delete', !!(user && user.email === DELETE_ADMIN));
         });
 
         window.switchTab = function(tab) {
