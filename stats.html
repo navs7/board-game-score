@@ -395,6 +395,68 @@
                 flex-basis: 100%;
             }
         }
+
+        /* ── Confirmation modal ── */
+        .confirm-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.65);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        .confirm-overlay.active { display: flex; }
+
+        .confirm-box {
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 28px 24px 20px;
+            max-width: 340px;
+            width: 100%;
+            text-align: center;
+        }
+        .confirm-box .confirm-icon {
+            font-size: 2rem;
+            margin-bottom: 10px;
+        }
+        .confirm-box .confirm-title {
+            font-size: 1.05rem;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+        .confirm-box .confirm-msg {
+            font-size: 0.875rem;
+            color: var(--text-muted);
+            margin-bottom: 24px;
+            line-height: 1.5;
+        }
+        .confirm-box .confirm-actions {
+            display: flex;
+            gap: 10px;
+        }
+        .confirm-box .confirm-actions button {
+            flex: 1;
+            padding: 12px;
+            border-radius: 10px;
+            border: none;
+            font-size: 0.9rem;
+            font-weight: 600;
+            cursor: pointer;
+            font-family: inherit;
+        }
+        .confirm-btn-cancel {
+            background: var(--border);
+            color: var(--text-main);
+        }
+        .confirm-btn-delete {
+            background: var(--danger);
+            color: #fff;
+        }
+        .confirm-btn-cancel:active { opacity: 0.8; }
+        .confirm-btn-delete:active { opacity: 0.85; }
     </style>
 </head>
 <body>
@@ -527,9 +589,13 @@
                 `;
 
                 const deleteBtn = header.querySelector('.delete-btn');
-                deleteBtn.addEventListener('click', (e) => {
+                deleteBtn.addEventListener('click', async (e) => {
                     e.stopPropagation();
-                    if (!confirm(`Delete "${game.gameName}" from history?\nThis cannot be undone.`)) return;
+                    const ok = await confirmDelete(
+                        `Delete "${game.gameName}"?`,
+                        'This game will be permanently removed from history. This cannot be undone.'
+                    );
+                    if (!ok) return;
                     remove(ref(db, `gameHistory/${game.id}`));
                 });
 
@@ -705,9 +771,13 @@
                 `;
 
                 const deleteBtn = header.querySelector('.delete-btn');
-                deleteBtn.addEventListener('click', (e) => {
+                deleteBtn.addEventListener('click', async (e) => {
                     e.stopPropagation();
-                    if (!confirm(`Delete all stats for "${player.name}"?\nThis cannot be undone.`)) return;
+                    const ok = await confirmDelete(
+                        `Delete "${player.name}"?`,
+                        'All stats and game history for this player will be permanently removed. This cannot be undone.'
+                    );
+                    if (!ok) return;
                     remove(ref(db, `playerRecords/${player.key}`));
                 });
 
@@ -742,6 +812,45 @@
             const q = e.target.value.toLowerCase();
             renderPlayers(allPlayersData.filter(p => p.name.toLowerCase().includes(q)));
         });
+    </script>
+
+    <!-- Confirmation modal -->
+    <div class="confirm-overlay" id="confirm-overlay">
+        <div class="confirm-box">
+            <div class="confirm-icon">🗑️</div>
+            <div class="confirm-title" id="confirm-title"></div>
+            <div class="confirm-msg" id="confirm-msg"></div>
+            <div class="confirm-actions">
+                <button class="confirm-btn-cancel" id="confirm-cancel">Cancel</button>
+                <button class="confirm-btn-delete" id="confirm-ok">Delete</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function confirmDelete(title, message) {
+            return new Promise((resolve) => {
+                const overlay = document.getElementById('confirm-overlay');
+                document.getElementById('confirm-title').textContent = title;
+                document.getElementById('confirm-msg').textContent = message;
+                overlay.classList.add('active');
+
+                function finish(result) {
+                    overlay.classList.remove('active');
+                    document.getElementById('confirm-ok').removeEventListener('click', onOk);
+                    document.getElementById('confirm-cancel').removeEventListener('click', onCancel);
+                    overlay.removeEventListener('click', onOverlay);
+                    resolve(result);
+                }
+                function onOk() { finish(true); }
+                function onCancel() { finish(false); }
+                function onOverlay(e) { if (e.target === overlay) finish(false); }
+
+                document.getElementById('confirm-ok').addEventListener('click', onOk);
+                document.getElementById('confirm-cancel').addEventListener('click', onCancel);
+                overlay.addEventListener('click', onOverlay);
+            });
+        }
     </script>
 </body>
 </html>
