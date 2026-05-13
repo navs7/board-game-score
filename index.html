@@ -91,6 +91,38 @@
             background: rgba(255, 255, 255, 0.3);
         }
 
+        /* ── Row & score animations ── */
+        @keyframes slideInRow {
+            from { opacity: 0; transform: translateX(40px); }
+            to   { opacity: 1; transform: translateX(0); }
+        }
+        @keyframes rankUp {
+            0%   { box-shadow: 0 0 0 0 rgba(34,197,94,0); background-color: inherit; }
+            20%  { box-shadow: 0 0 0 3px rgba(34,197,94,0.7); background-color: rgba(34,197,94,0.18); }
+            100% { box-shadow: 0 0 0 0 rgba(34,197,94,0); background-color: inherit; }
+        }
+        @keyframes rankDown {
+            0%   { box-shadow: 0 0 0 0 rgba(239,68,68,0); background-color: inherit; }
+            20%  { box-shadow: 0 0 0 3px rgba(239,68,68,0.7); background-color: rgba(239,68,68,0.18); }
+            100% { box-shadow: 0 0 0 0 rgba(239,68,68,0); background-color: inherit; }
+        }
+        @keyframes scoreFlash {
+            0%   { transform: scale(1);    background: rgba(255,255,255,0.1); color: inherit; }
+            30%  { transform: scale(1.25); background: rgba(251,191,36,0.5);  color: #fff; }
+            100% { transform: scale(1);    background: rgba(255,255,255,0.1); color: inherit; }
+        }
+        @keyframes scoreFlashTop {
+            0%   { transform: scale(1);    background: rgba(255,255,255,0.3); color: #451a03; }
+            30%  { transform: scale(1.25); background: rgba(255,255,255,0.7); color: #451a03; }
+            100% { transform: scale(1);    background: rgba(255,255,255,0.3); color: #451a03; }
+        }
+
+        .row-slide-in  { animation: slideInRow 0.35s ease both; }
+        .row-rank-up   { animation: rankUp   0.7s ease both; }
+        .row-rank-down { animation: rankDown 0.7s ease both; }
+        .score-changed      { animation: scoreFlash    0.55s ease both; }
+        .score-changed-top  { animation: scoreFlashTop 0.55s ease both; }
+
         .footer-links {
             margin-top: auto;
             padding-top: 18px;
@@ -281,15 +313,30 @@
             await navigator.clipboard.writeText(scoreboardUrl);
         });
 
+        /* track previous state for animations */
+        let prevRanks  = {};   /* playerName → rank index */
+        let prevScores = {};   /* playerName → score */
+        let isFirstRender = true;
+
+        function rearm(el, cls) {
+            el.classList.remove(cls);
+            void el.offsetWidth;
+            el.classList.add(cls);
+        }
+
         onValue(gameRef, (snapshot) => {
             const data = snapshot.val();
             const waiting = document.getElementById('waiting-screen');
             const titleEl = document.getElementById('gameTitle');
+            const leaderboard = document.getElementById('leaderboard');
 
             if (!data || data.gameStatus !== 'active') {
                 waiting.classList.add('visible');
                 titleEl.style.display = 'none';
-                document.getElementById('leaderboard').innerHTML = '';
+                leaderboard.innerHTML = '';
+                prevRanks = {};
+                prevScores = {};
+                isFirstRender = true;
                 return;
             }
 
@@ -298,47 +345,69 @@
             titleEl.innerText = data.gameName;
 
             let playersArray = [];
-            for (let id in data.players) {
-                playersArray.push(data.players[id]);
-            }
+            for (let id in data.players) playersArray.push(data.players[id]);
+            playersArray.sort((a, b) =>
+                data.rankingOrder === 'highest'
+                    ? b.totalScore - a.totalScore
+                    : a.totalScore - b.totalScore
+            );
 
-            playersArray.sort((a, b) => {
-                if (data.rankingOrder === 'highest') {
-                    return b.totalScore - a.totalScore;
-                } else {
-                    return a.totalScore - b.totalScore;
-                }
-            });
+            /* build new ranks map for this update */
+            const newRanks  = {};
+            const newScores = {};
+            playersArray.forEach((p, i) => { newRanks[p.name] = i; newScores[p.name] = p.totalScore; });
 
-            const leaderboard = document.getElementById('leaderboard');
             leaderboard.innerHTML = '';
 
             playersArray.forEach((player, index) => {
+                const isTop = index === 0;
+
                 const row = document.createElement('div');
-                row.className = 'player-row';
-                if (index === 0) row.classList.add('top-rank');
+                row.className = 'player-row' + (isTop ? ' top-rank' : '');
 
                 const info = document.createElement('div');
                 info.className = 'player-info';
 
-                const rank = document.createElement('span');
-                rank.className = 'rank';
-                rank.textContent = `#${index + 1}`;
+                const rankSpan = document.createElement('span');
+                rankSpan.className = 'rank';
+                rankSpan.textContent = `#${index + 1}`;
 
                 const name = document.createElement('strong');
                 name.textContent = player.name;
 
-                info.appendChild(rank);
+                info.appendChild(rankSpan);
                 info.appendChild(name);
 
-                const score = document.createElement('span');
-                score.className = 'score-pill';
-                score.textContent = player.totalScore;
+                const scorePill = document.createElement('span');
+                scorePill.className = 'score-pill';
+                scorePill.textContent = player.totalScore;
 
                 row.appendChild(info);
-                row.appendChild(score);
+                row.appendChild(scorePill);
                 leaderboard.appendChild(row);
+
+                if (isFirstRender) {
+                    /* staggered slide-in on game start */
+                    row.style.animationDelay = `${index * 80}ms`;
+                    row.classList.add('row-slide-in');
+                } else {
+                    const oldRank  = prevRanks[player.name];
+                    const oldScore = prevScores[player.name];
+                    const rankChanged  = oldRank !== undefined && oldRank !== index;
+                    const scoreChanged = oldScore !== undefined && oldScore !== player.totalScore;
+
+                    if (rankChanged) {
+                        rearm(row, oldRank > index ? 'row-rank-up' : 'row-rank-down');
+                    }
+                    if (scoreChanged) {
+                        rearm(scorePill, isTop ? 'score-changed-top' : 'score-changed');
+                    }
+                }
             });
+
+            prevRanks  = newRanks;
+            prevScores = newScores;
+            isFirstRender = false;
         });
     </script>
 
