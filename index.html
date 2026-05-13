@@ -132,10 +132,139 @@
             .player-row { padding: 12px 15px; font-size: 1.1rem; }
             .rank { font-size: 1.25rem; }
         }
+
+        /* ── Waiting screen ── */
+        #waiting-screen {
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            flex: 1;
+            gap: 0;
+            padding: 40px 20px;
+            text-align: center;
+        }
+        #waiting-screen.visible { display: flex; }
+
+        /* Floating dice ring */
+        .dice-ring {
+            position: relative;
+            width: 160px;
+            height: 160px;
+            margin-bottom: 36px;
+        }
+        .dice-center {
+            position: absolute;
+            inset: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 3.8rem;
+            animation: breathe 3s ease-in-out infinite;
+            filter: drop-shadow(0 0 18px rgba(59,130,246,0.6));
+        }
+        .dice-orbit {
+            position: absolute;
+            font-size: 1.6rem;
+            animation: orbit 6s linear infinite;
+            transform-origin: 80px 80px;
+            filter: drop-shadow(0 0 6px rgba(59,130,246,0.4));
+        }
+        .dice-orbit:nth-child(2) { animation-delay: -2s; }
+        .dice-orbit:nth-child(3) { animation-delay: -4s; }
+
+        @keyframes breathe {
+            0%, 100% { transform: scale(1) rotate(-4deg); }
+            50%       { transform: scale(1.12) rotate(4deg); }
+        }
+        @keyframes orbit {
+            from { transform: rotate(0deg) translateX(68px) rotate(0deg); }
+            to   { transform: rotate(360deg) translateX(68px) rotate(-360deg); }
+        }
+
+        /* Waiting text */
+        .waiting-heading {
+            font-size: 1.6rem;
+            font-weight: 800;
+            color: var(--text-main);
+            margin-bottom: 10px;
+            letter-spacing: -0.5px;
+        }
+        .waiting-heading .dots span {
+            animation: blink 1.4s infinite;
+            opacity: 0;
+        }
+        .waiting-heading .dots span:nth-child(2) { animation-delay: 0.2s; }
+        .waiting-heading .dots span:nth-child(3) { animation-delay: 0.4s; }
+
+        @keyframes blink {
+            0%, 80%, 100% { opacity: 0; }
+            40%            { opacity: 1; }
+        }
+
+        .waiting-sub {
+            font-size: 0.9rem;
+            color: var(--text-muted);
+            margin-bottom: 32px;
+        }
+
+        /* Floating background dice */
+        .bg-dice {
+            position: fixed;
+            font-size: 1.4rem;
+            opacity: 0.07;
+            pointer-events: none;
+            animation: floatUp linear infinite;
+            user-select: none;
+        }
+        @keyframes floatUp {
+            0%   { transform: translateY(0) rotate(0deg);   opacity: 0;    }
+            10%  { opacity: 0.07; }
+            90%  { opacity: 0.07; }
+            100% { transform: translateY(-100vh) rotate(360deg); opacity: 0; }
+        }
+
+        /* Live pulse badge */
+        .live-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 7px;
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            padding: 6px 16px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: var(--text-muted);
+        }
+        .live-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #22c55e;
+            animation: pulse-dot 1.8s ease-in-out infinite;
+        }
+        @keyframes pulse-dot {
+            0%, 100% { box-shadow: 0 0 0 0 rgba(34,197,94,0.5); }
+            50%       { box-shadow: 0 0 0 6px rgba(34,197,94,0); }
+        }
     </style>
 </head>
 <body>
-    <h1 id="gameTitle">Waiting for game...</h1>
+    <h1 id="gameTitle" style="display:none"></h1>
+
+    <!-- Waiting screen (shown when no active game) -->
+    <div id="waiting-screen" class="visible">
+        <div class="dice-ring">
+            <div class="dice-center">🎲</div>
+            <div class="dice-orbit" style="top:0;left:0;">♟️</div>
+            <div class="dice-orbit" style="top:0;left:0;">🃏</div>
+            <div class="dice-orbit" style="top:0;left:0;">🎯</div>
+        </div>
+        <div class="waiting-heading">Waiting for game<span class="dots"><span>.</span><span>.</span><span>.</span></span></div>
+        <div class="waiting-sub">Scoreboard updates live when a game starts</div>
+        <div class="live-badge"><span class="live-dot"></span> Live</div>
+    </div>
+
     <div class="leaderboard" id="leaderboard"></div>
 
     <div class="footer-links">
@@ -154,13 +283,19 @@
 
         onValue(gameRef, (snapshot) => {
             const data = snapshot.val();
+            const waiting = document.getElementById('waiting-screen');
+            const titleEl = document.getElementById('gameTitle');
+
             if (!data || data.gameStatus !== 'active') {
-                document.getElementById('gameTitle').innerText = 'Waiting for game...';
+                waiting.classList.add('visible');
+                titleEl.style.display = 'none';
                 document.getElementById('leaderboard').innerHTML = '';
                 return;
             }
 
-            document.getElementById('gameTitle').innerText = data.gameName;
+            waiting.classList.remove('visible');
+            titleEl.style.display = '';
+            titleEl.innerText = data.gameName;
 
             let playersArray = [];
             for (let id in data.players) {
@@ -205,6 +340,26 @@
                 leaderboard.appendChild(row);
             });
         });
+    </script>
+
+    <script>
+        (function spawnBgDice() {
+            const icons = ['🎲','🎲','🎲','♟️','🃏','🎯','🏆','⭐'];
+            function spawn() {
+                const el = document.createElement('span');
+                el.className = 'bg-dice';
+                el.textContent = icons[Math.floor(Math.random() * icons.length)];
+                el.style.left = Math.random() * 100 + 'vw';
+                el.style.bottom = '-2rem';
+                const dur = 8 + Math.random() * 10;
+                el.style.animationDuration = dur + 's';
+                el.style.fontSize = (1 + Math.random() * 1.2) + 'rem';
+                document.body.appendChild(el);
+                setTimeout(() => el.remove(), dur * 1000);
+            }
+            setInterval(spawn, 900);
+            for (let i = 0; i < 5; i++) setTimeout(spawn, i * 200);
+        })();
     </script>
 </body>
 </html>
