@@ -94,10 +94,10 @@ Hosted at: **https://navs7.github.io/board-game-score/**
 | View scoreboard | Anyone |
 | View stats & history | Anyone |
 | Manage games (admin panel) | Any authenticated user |
-| Delete games / players | `07navneet@gmail.com` only |
+| Delete games / players | `****et@gmail.com` only |
 
 The stats page shows the **Admin mode** badge and delete buttons only when:
-1. Signed in as `07navneet@gmail.com`, **and**
+1. Signed in as `*****et@gmail.com`, **and**
 2. Navigated from the admin panel (via the Stats button there)
 
 ---
