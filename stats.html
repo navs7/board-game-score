@@ -394,6 +394,26 @@
             .game-row .game-winner {
                 flex-basis: 100%;
             }
+
+            /* Leaderboard rows: name on top, stats below */
+            .lb-row {
+                flex-wrap: wrap;
+                row-gap: 6px;
+            }
+
+            .lb-name {
+                flex: 1 1 auto;
+                min-width: 0;
+                white-space: nowrap;
+                overflow: hidden;
+                text-overflow: ellipsis;
+            }
+
+            .lb-stats {
+                flex-basis: 100%;
+                padding-left: 44px;
+                flex-shrink: 1;
+            }
         }
 
         /* ── Confirmation modal ── */
@@ -494,7 +514,6 @@
         <div class="sort-bar">
             <button class="sort-btn active" id="sort-wins" onclick="setSort('wins')">🏆 Wins</button>
             <button class="sort-btn" id="sort-winrate" onclick="setSort('winrate')">📈 Win Rate</button>
-            <button class="sort-btn" id="sort-avgscore" onclick="setSort('avgscore')">⭐ Avg Score</button>
         </div>
         <div class="loading" id="lb-loading">Loading leaderboard...</div>
         <div id="lb-list"></div>
@@ -628,7 +647,7 @@
 
         window.setSort = function(sort) {
             currentSort = sort;
-            ['wins','winrate','avgscore'].forEach(s => {
+            ['wins','winrate'].forEach(s => {
                 document.getElementById('sort-' + s).classList.toggle('active', s === sort);
             });
             renderLeaderboard(allPlayersData);
@@ -640,11 +659,8 @@
                 : [];
             const totalGames = games.length;
             const wins = games.filter(g => g.won).length;
-            const avgScore = totalGames > 0
-                ? Math.round(games.reduce((sum, g) => sum + (g.score || 0), 0) / totalGames)
-                : 0;
             const winRate = totalGames > 0 ? Math.round((wins / totalGames) * 100) : 0;
-            return { totalGames, wins, avgScore, winRate };
+            return { totalGames, wins, winRate };
         }
 
         function renderLeaderboard(players) {
@@ -661,11 +677,9 @@
 
             const sorted = [...enriched].sort((a, b) => {
                 if (currentSort === 'wins') {
-                    return b.wins !== a.wins ? b.wins - a.wins : b.avgScore - a.avgScore;
-                } else if (currentSort === 'winrate') {
-                    return b.winRate !== a.winRate ? b.winRate - a.winRate : b.wins - a.wins;
+                    return b.wins !== a.wins ? b.wins - a.wins : b.winRate - a.winRate;
                 } else {
-                    return b.avgScore !== a.avgScore ? b.avgScore - a.avgScore : b.wins - a.wins;
+                    return b.winRate !== a.winRate ? b.winRate - a.winRate : b.wins - a.wins;
                 }
             });
 
@@ -675,16 +689,13 @@
                 const pos = i + 1;
                 const rankLabel = pos <= 3 ? medals[i] : `#${pos}`;
 
-                let highlightPill, otherPills;
+                let highlightPill, otherPill;
                 if (currentSort === 'wins') {
                     highlightPill = `<span class="lb-pill highlight">${player.wins} win${player.wins !== 1 ? 's' : ''}</span>`;
-                    otherPills = `<span class="lb-pill">${player.winRate}% rate</span><span class="lb-pill">${player.avgScore} avg</span>`;
-                } else if (currentSort === 'winrate') {
-                    highlightPill = `<span class="lb-pill highlight">${player.winRate}% win rate</span>`;
-                    otherPills = `<span class="lb-pill">${player.wins} wins</span><span class="lb-pill">${player.avgScore} avg</span>`;
+                    otherPill = `<span class="lb-pill">${player.winRate}% rate</span>`;
                 } else {
-                    highlightPill = `<span class="lb-pill highlight">${player.avgScore} avg pts</span>`;
-                    otherPills = `<span class="lb-pill">${player.wins} wins</span><span class="lb-pill">${player.winRate}% rate</span>`;
+                    highlightPill = `<span class="lb-pill highlight">${player.winRate}% win rate</span>`;
+                    otherPill = `<span class="lb-pill">${player.wins} win${player.wins !== 1 ? 's' : ''}</span>`;
                 }
 
                 const row = document.createElement('div');
@@ -694,7 +705,7 @@
                     <span class="lb-name">${escapeHtml(player.name)}</span>
                     <div class="lb-stats">
                         ${highlightPill}
-                        ${otherPills}
+                        ${otherPill}
                         <span class="lb-games">${player.totalGames}G</span>
                     </div>
                 `;
