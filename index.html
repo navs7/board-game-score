@@ -384,7 +384,12 @@
             playersArray.forEach((p, i) => { newRanks[p.name] = i; newScores[p.name] = p.totalScore; });
 
             /* ── Round completion & streak tracking ── */
-            const histories = playersArray.map(p => Array.isArray(p.history) ? p.history : []);
+            /* Firebase stores arrays as objects {0:v, 1:v, …} — normalise back to array */
+            const histories = playersArray.map(p => {
+                if (!p.history) return [];
+                if (Array.isArray(p.history)) return p.history;
+                return Object.values(p.history);
+            });
             const roundLengths = histories.map(h => h.length);
             const minRounds = roundLengths.length ? Math.min(...roundLengths) : 0;
             const allRoundsEqual = roundLengths.every(l => l === minRounds);
