@@ -91,6 +91,28 @@
             background: rgba(255, 255, 255, 0.3);
         }
 
+        /* ── Streak badge ── */
+        .streak-badge {
+            font-size: 0.78rem;
+            font-weight: 700;
+            padding: 4px 9px;
+            border-radius: 20px;
+            background: rgba(249,115,22,0.18);
+            color: #fb923c;
+            white-space: nowrap;
+            margin-left: 6px;
+        }
+        .top-rank .streak-badge {
+            background: rgba(0,0,0,0.15);
+            color: #7c2d12;
+        }
+        @keyframes streakPop {
+            0%   { transform: scale(0.6); opacity: 0; }
+            60%  { transform: scale(1.2); }
+            100% { transform: scale(1);   opacity: 1; }
+        }
+        .streak-new { animation: streakPop 0.4s ease both; }
+
         /* ── Row & score animations ── */
         @keyframes slideInRow {
             from { opacity: 0; transform: translateX(40px); }
@@ -314,9 +336,11 @@
         });
 
         /* track previous state for animations */
-        let prevRanks  = {};   /* playerName → rank index */
-        let prevScores = {};   /* playerName → score */
-        let isFirstRender = true;
+        let prevRanks      = {};   /* playerName → rank index */
+        let prevScores     = {};   /* playerName → score */
+        let streaks        = {};   /* playerName → consecutive round wins */
+        let prevRoundCount = 0;    /* last known completed round count */
+        let isFirstRender  = true;
 
         function rearm(el, cls) {
             el.classList.remove(cls);
@@ -334,9 +358,11 @@
                 waiting.classList.add('visible');
                 titleEl.style.display = 'none';
                 leaderboard.innerHTML = '';
-                prevRanks = {};
-                prevScores = {};
-                isFirstRender = true;
+                prevRanks      = {};
+                prevScores     = {};
+                streaks        = {};
+                prevRoundCount = 0;
+                isFirstRender  = true;
                 return;
             }
 
@@ -356,6 +382,43 @@
             const newRanks  = {};
             const newScores = {};
             playersArray.forEach((p, i) => { newRanks[p.name] = i; newScores[p.name] = p.totalScore; });
+
+            /* ── Round completion & streak tracking ── */
+            const histories = playersArray.map(p => Array.isArray(p.history) ? p.history : []);
+            const roundLengths = histories.map(h => h.length);
+            const minRounds = roundLengths.length ? Math.min(...roundLengths) : 0;
+            const allRoundsEqual = roundLengths.every(l => l === minRounds);
+            let newStreakPlayer = null;
+
+            if (isFirstRender) {
+                /* joining mid-game — snapshot current round count, don't award streaks */
+                prevRoundCount = minRounds;
+            } else if (minRounds < prevRoundCount) {
+                /* scores were reset — clear all streaks */
+                streaks = {};
+                prevRoundCount = minRounds;
+            } else if (allRoundsEqual && minRounds > prevRoundCount) {
+                /* a full round just finished — find its winner */
+                const roundIdx = minRounds - 1;
+                const roundScores = playersArray.map((p, i) => ({
+                    name: p.name,
+                    score: histories[i][roundIdx] ?? 0
+                }));
+                const roundWinner = roundScores.reduce((best, p) =>
+                    data.rankingOrder === 'lowest'
+                        ? (p.score < best.score ? p : best)
+                        : (p.score > best.score ? p : best)
+                );
+                playersArray.forEach(p => {
+                    if (p.name === roundWinner.name) {
+                        streaks[p.name] = (streaks[p.name] || 0) + 1;
+                        if (streaks[p.name] >= 2) newStreakPlayer = p.name;
+                    } else {
+                        streaks[p.name] = 0;
+                    }
+                });
+                prevRoundCount = minRounds;
+            }
 
             leaderboard.innerHTML = '';
 
@@ -382,8 +445,20 @@
                 scorePill.className = 'score-pill';
                 scorePill.textContent = player.totalScore;
 
+                const rightSide = document.createElement('div');
+                rightSide.style.cssText = 'display:flex;align-items:center;gap:0';
+                rightSide.appendChild(scorePill);
+
+                const streak = streaks[player.name] || 0;
+                if (streak >= 2) {
+                    const badge = document.createElement('span');
+                    badge.className = 'streak-badge' + (player.name === newStreakPlayer ? ' streak-new' : '');
+                    badge.textContent = `🔥 ${streak}`;
+                    rightSide.appendChild(badge);
+                }
+
                 row.appendChild(info);
-                row.appendChild(scorePill);
+                row.appendChild(rightSide);
                 leaderboard.appendChild(row);
 
                 if (isFirstRender) {

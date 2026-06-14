@@ -130,6 +130,30 @@
         .card-title { font-weight: 700; font-size: 1rem; }
         .card-subtitle { font-size: 0.8rem; color: var(--text-muted); margin-top: 3px; }
 
+        .card-top3 {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px 12px;
+            margin-top: 5px;
+        }
+        .top3-item {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            font-weight: 600;
+        }
+        .top3-medal { font-size: 0.85rem; }
+
+        .winner-mode-label {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            margin-bottom: 10px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid var(--border);
+        }
+
         .card-header-right {
             display: flex;
             align-items: center;
@@ -596,10 +620,18 @@
 
                 const header = document.createElement('div');
                 header.className = 'card-header';
+                const medals = ['🥇', '🥈', '🥉'];
+                const top3 = [...(game.players || [])].sort((a, b) => a.rank - b.rank).slice(0, 3);
+                const top3html = top3.map((p, i) =>
+                    `<span class="top3-item"><span class="top3-medal">${medals[i]}</span>${escapeHtml(p.name)}</span>`
+                ).join('');
+                const playerCount = game.players ? game.players.length : 0;
+
                 header.innerHTML = `
                     <div class="card-header-left">
                         <div class="card-title">${escapeHtml(game.gameName)}</div>
-                        <div class="card-subtitle">${escapeHtml(winnerLabel)} · ${winner ? escapeHtml(winner.name) : '—'} &nbsp;·&nbsp; ${game.players ? game.players.length : 0} players</div>
+                        <div class="card-top3">${top3html}</div>
+                        <div class="card-subtitle">${playerCount} player${playerCount !== 1 ? 's' : ''}</div>
                     </div>
                     <div class="card-header-right">
                         <span class="card-meta">${formatDate(game.endedAt)}</span>
@@ -620,7 +652,7 @@
 
                 const body = document.createElement('div');
                 body.className = 'card-body';
-                body.innerHTML = renderRankings(game.players || []);
+                body.innerHTML = `<div class="winner-mode-label">${escapeHtml(winnerLabel)}</div>` + renderRankings(game.players || []);
 
                 card.appendChild(header);
                 card.appendChild(body);
