@@ -396,7 +396,26 @@
             let newStreakPlayer = null;
 
             if (isFirstRender) {
-                /* joining mid-game — snapshot current round count, don't award streaks */
+                /* compute streaks retroactively from all rounds already played */
+                streaks = {};
+                for (let round = 0; round < minRounds; round++) {
+                    const roundScores = playersArray.map((p, i) => ({
+                        name: p.name,
+                        score: histories[i][round] ?? 0
+                    }));
+                    const roundWinner = roundScores.reduce((best, p) =>
+                        data.rankingOrder === 'lowest'
+                            ? (p.score < best.score ? p : best)
+                            : (p.score > best.score ? p : best)
+                    );
+                    playersArray.forEach(p => {
+                        if (p.name === roundWinner.name) {
+                            streaks[p.name] = (streaks[p.name] || 0) + 1;
+                        } else {
+                            streaks[p.name] = 0;
+                        }
+                    });
+                }
                 prevRoundCount = minRounds;
             } else if (minRounds < prevRoundCount) {
                 /* scores were reset — clear all streaks */
