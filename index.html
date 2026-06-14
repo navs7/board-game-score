@@ -106,6 +106,14 @@
             background: rgba(0,0,0,0.15);
             color: #7c2d12;
         }
+        .streak-badge .streak-icon {
+            display: inline-block;
+            animation: flicker 1.2s ease-in-out infinite;
+        }
+        @keyframes flicker {
+            0%, 100% { transform: scale(1);   opacity: 1; }
+            50%       { transform: scale(1.15); opacity: 0.8; }
+        }
         @keyframes streakPop {
             0%   { transform: scale(0.6); opacity: 0; }
             60%  { transform: scale(1.2); }
@@ -477,7 +485,7 @@
                 if (streak >= 2) {
                     const badge = document.createElement('span');
                     badge.className = 'streak-badge' + (player.name === newStreakPlayer ? ' streak-new' : '');
-                    badge.textContent = `🔥 ${streak}`;
+                    badge.innerHTML = `<span class="streak-icon">🔥</span> ${streak}`;
                     rightSide.appendChild(badge);
                 }
 

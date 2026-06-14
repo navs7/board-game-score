@@ -556,11 +556,12 @@
 
         document.getElementById('playerNames').addEventListener('input', syncPlayerChipsFromInput);
 
-        /* ── Copy link ── */
+        /* ── Copy link & open scoreboard ── */
         document.getElementById('copyLinkBtn').addEventListener('click', () => {
+            window.open(scoreboardUrl, '_blank');
             navigator.clipboard.writeText(scoreboardUrl).then(() => {
                 const fb = document.getElementById('copyFeedback');
-                fb.textContent = 'Link copied to clipboard!';
+                fb.textContent = 'Link opened & copied!';
                 setTimeout(() => { fb.textContent = ''; }, 2500);
             });
         });
