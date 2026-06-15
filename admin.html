@@ -640,7 +640,8 @@
             );
 
             const rankedPlayers = playersArray.map((p, i) => ({
-                name: p.name, totalScore: p.totalScore, rank: i + 1, won: i === 0
+                name: p.name, totalScore: p.totalScore, rank: i + 1, won: i === 0,
+                history: p.history ? Object.values(p.history) : []
             }));
 
             const historyRef = ref(db, 'gameHistory');

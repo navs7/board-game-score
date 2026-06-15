@@ -154,6 +154,65 @@
             border-bottom: 1px solid var(--border);
         }
 
+        /* ── Round breakdown table ── */
+        .rounds-section {
+            margin-top: 14px;
+            padding-top: 12px;
+            border-top: 1px solid var(--border);
+        }
+        .rounds-label {
+            font-size: 0.75rem;
+            font-weight: 700;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: 8px;
+        }
+        .rounds-scroll {
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+        .rounds-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.82rem;
+            white-space: nowrap;
+        }
+        .rounds-table th {
+            text-align: center;
+            padding: 5px 10px;
+            color: var(--text-muted);
+            font-weight: 600;
+            border-bottom: 1px solid var(--border);
+        }
+        .rounds-table th.col-round {
+            text-align: left;
+            min-width: 56px;
+        }
+        .rounds-table td {
+            text-align: center;
+            padding: 5px 10px;
+            border-bottom: 1px solid rgba(255,255,255,0.04);
+        }
+        .rounds-table td.col-round {
+            text-align: left;
+            color: var(--text-muted);
+            font-weight: 600;
+        }
+        .rounds-table tr:last-child td { border-bottom: none; }
+        .round-best {
+            color: #22c55e;
+            font-weight: 700;
+        }
+        .rounds-table tr.totals-row td {
+            border-top: 1px solid var(--border);
+            font-weight: 700;
+            color: var(--text-main);
+        }
+        .rounds-table tr.totals-row td.col-round {
+            color: var(--text-muted);
+        }
+
         .card-header-right {
             display: flex;
             align-items: center;
@@ -660,7 +719,9 @@
 
                 const body = document.createElement('div');
                 body.className = 'card-body';
-                body.innerHTML = `<div class="winner-mode-label">${escapeHtml(winnerLabel)}</div>` + renderRankings(game.players || []);
+                body.innerHTML = `<div class="winner-mode-label">${escapeHtml(winnerLabel)}</div>`
+                    + renderRankings(game.players || [])
+                    + renderRoundsTable(game.players || [], game.rankingOrder);
 
                 card.appendChild(header);
                 card.appendChild(body);
@@ -679,6 +740,66 @@
                     <span class="rank-score">${p.totalScore} pts</span>
                 </div>
             `).join('');
+        }
+
+        function renderRoundsTable(players, rankingOrder) {
+            /* normalise Firebase object-arrays back to real arrays */
+            const sorted = [...players].sort((a, b) => a.rank - b.rank);
+            const histories = sorted.map(p =>
+                p.history
+                    ? (Array.isArray(p.history) ? p.history : Object.values(p.history))
+                    : []
+            );
+            const numRounds = Math.max(...histories.map(h => h.length), 0);
+            if (numRounds === 0) return '';
+
+            /* header row */
+            const headerCells = sorted.map(p =>
+                `<th title="${escapeHtml(p.name)}">${escapeHtml(p.name.length > 8 ? p.name.slice(0,7) + '…' : p.name)}</th>`
+            ).join('');
+
+            /* one row per round */
+            const roundRows = [];
+            for (let r = 0; r < numRounds; r++) {
+                const scores = histories.map(h => h[r] ?? '—');
+                const numericScores = scores.filter(s => s !== '—');
+                let bestScore = null;
+                if (numericScores.length) {
+                    bestScore = rankingOrder === 'lowest'
+                        ? Math.min(...numericScores)
+                        : Math.max(...numericScores);
+                }
+                const cells = scores.map(s =>
+                    `<td class="${s === bestScore ? 'round-best' : ''}">${s}</td>`
+                ).join('');
+                roundRows.push(`<tr><td class="col-round">R${r + 1}</td>${cells}</tr>`);
+            }
+
+            /* totals row */
+            const totalCells = sorted.map(p => `<td>${p.totalScore}</td>`).join('');
+
+            return `
+                <div class="rounds-section">
+                    <div class="rounds-label">Round breakdown</div>
+                    <div class="rounds-scroll">
+                        <table class="rounds-table">
+                            <thead>
+                                <tr>
+                                    <th class="col-round"></th>
+                                    ${headerCells}
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${roundRows.join('')}
+                                <tr class="totals-row">
+                                    <td class="col-round">Total</td>
+                                    ${totalCells}
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            `;
         }
 
         /* ── Player Records + Leaderboard ── */
