@@ -127,7 +127,18 @@
         }
 
         .card-header-left { flex: 1; min-width: 0; }
+        .card-title-row {
+            display: flex;
+            align-items: baseline;
+            flex-wrap: wrap;
+            gap: 4px 10px;
+        }
         .card-title { font-weight: 700; font-size: 1rem; }
+        .card-meta-inline {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            white-space: nowrap;
+        }
         .card-subtitle { font-size: 0.8rem; color: var(--text-muted); margin-top: 3px; }
 
         .card-top3 {
@@ -696,12 +707,14 @@
 
                 header.innerHTML = `
                     <div class="card-header-left">
-                        <div class="card-title">${escapeHtml(game.gameName)}</div>
+                        <div class="card-title-row">
+                            <span class="card-title">${escapeHtml(game.gameName)}</span>
+                            <span class="card-meta card-meta-inline">${formatDateTime(game.endedAt)}</span>
+                        </div>
                         <div class="card-top3">${top3html}</div>
                         <div class="card-subtitle">${playerCount} player${playerCount !== 1 ? 's' : ''}</div>
                     </div>
                     <div class="card-header-right">
-                        <span class="card-meta">${formatDateTime(game.endedAt)}</span>
                         <button class="delete-btn" title="Delete this game">🗑️</button>
                     </div>
                 `;
