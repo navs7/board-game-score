@@ -584,6 +584,14 @@
             return d.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
         }
 
+        function formatDateTime(ts) {
+            if (!ts) return '';
+            const d = new Date(ts);
+            const date = d.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
+            const time = d.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' });
+            return `${date}, ${time}`;
+        }
+
         function getWinnerLabel(mode) {
             return mode === 'lowest' ? 'Lowest Score Winner' : 'Highest Score Winner';
         }
@@ -634,7 +642,7 @@
                         <div class="card-subtitle">${playerCount} player${playerCount !== 1 ? 's' : ''}</div>
                     </div>
                     <div class="card-header-right">
-                        <span class="card-meta">${formatDate(game.endedAt)}</span>
+                        <span class="card-meta">${formatDateTime(game.endedAt)}</span>
                         <button class="delete-btn" title="Delete this game">🗑️</button>
                     </div>
                 `;
@@ -790,7 +798,7 @@
                 const gameRows = games.map(g => `
                     <div class="game-row">
                         <span class="game-name">${escapeHtml(g.gameName)}</span>
-                        ${g.won ? `<span class="won-badge game-winner">${escapeHtml(g.winnerLabel || 'Won')}</span>` : ''}
+                        ${g.won ? `<span class="won-badge game-winner">🏆 Won</span>` : ''}
                         <span class="game-rank">#${g.rank} of ${g.totalPlayers}</span>
                         <span class="rank-score">${g.score} pts</span>
                         <span style="font-size:0.75rem;color:var(--text-muted);white-space:nowrap;">${formatDate(g.endedAt)}</span>
