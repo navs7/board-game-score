@@ -670,7 +670,8 @@
                     won: rp.won,
                     winnerLabel: data.rankingOrder === 'highest' ? 'Highest Score Wins' : 'Lowest Score Wins',
                     totalPlayers: rankedPlayers.length,
-                    endedAt
+                    endedAt,
+                    roundHistory: rp.history || []
                 };
                 await set(prRef, prData);
             }
