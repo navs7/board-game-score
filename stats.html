@@ -327,8 +327,8 @@
         /* Player stats */
         .stat-grid {
             display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 10px;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 8px;
             margin-bottom: 14px;
         }
 
@@ -336,12 +336,22 @@
             background: rgba(255,255,255,0.04);
             border: 1px solid var(--border);
             border-radius: 8px;
-            padding: 10px;
+            padding: 8px 6px;
             text-align: center;
         }
 
-        .stat-value { font-size: 1.4rem; font-weight: 800; color: var(--primary); }
+        .stat-value { font-size: 1.3rem; font-weight: 800; color: var(--primary); }
         .stat-label { font-size: 0.72rem; color: var(--text-muted); margin-top: 2px; }
+        .stat-sublabel {
+            font-size: 0.65rem;
+            color: var(--text-muted);
+            margin-top: 3px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-width: 100%;
+            opacity: 0.75;
+        }
 
         .game-row {
             display: flex;
@@ -970,6 +980,16 @@
                     ? Math.round(games.reduce((sum, g) => sum + (g.score || 0), 0) / totalGames)
                     : 0;
 
+                const wonGames = games.filter(g => g.won);
+                const bestWin = wonGames.length
+                    ? wonGames.reduce((best, g) => {
+                        const gBetter = g.winnerLabel === 'Lowest Score Wins'
+                            ? g.score < best.score
+                            : g.score > best.score;
+                        return gBetter ? g : best;
+                    })
+                    : null;
+
                 const gameRows = games.map(g => {
                     const rounds = g.roundHistory
                         ? (Array.isArray(g.roundHistory) ? g.roundHistory : Object.values(g.roundHistory))
@@ -1017,6 +1037,13 @@
 
                 const body = document.createElement('div');
                 body.className = 'card-body';
+                const bestWinHtml = bestWin
+                    ? `<div class="stat-value">${bestWin.score}</div>
+                       <div class="stat-label">Best Win</div>
+                       <div class="stat-sublabel" title="${escapeHtml(bestWin.gameName)}">${escapeHtml(bestWin.gameName)}</div>`
+                    : `<div class="stat-value" style="font-size:1rem;opacity:0.4">—</div>
+                       <div class="stat-label">Best Win</div>`;
+
                 body.innerHTML = `
                     <div class="stat-grid">
                         <div class="stat-box">
@@ -1031,6 +1058,7 @@
                             <div class="stat-value">${avgScore}</div>
                             <div class="stat-label">Avg Score</div>
                         </div>
+                        <div class="stat-box">${bestWinHtml}</div>
                     </div>
                     <div>${gameRows}</div>
                 `;
