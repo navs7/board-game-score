@@ -558,12 +558,40 @@
 
         /* ── Copy link & open scoreboard ── */
         document.getElementById('copyLinkBtn').addEventListener('click', () => {
-            window.open(scoreboardUrl, '_blank');
-            navigator.clipboard.writeText(scoreboardUrl).then(() => {
-                const fb = document.getElementById('copyFeedback');
+            const fb = document.getElementById('copyFeedback');
+
+            /* Copy first (while we still have the user gesture), then open tab */
+            function doOpen() {
+                window.open(scoreboardUrl, '_blank');
                 fb.textContent = 'Link opened & copied!';
                 setTimeout(() => { fb.textContent = ''; }, 2500);
-            });
+            }
+
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+                navigator.clipboard.writeText(scoreboardUrl)
+                    .then(doOpen)
+                    .catch(() => {
+                        /* Clipboard API blocked — use execCommand fallback */
+                        const ta = document.createElement('textarea');
+                        ta.value = scoreboardUrl;
+                        ta.style.cssText = 'position:fixed;opacity:0;pointer-events:none';
+                        document.body.appendChild(ta);
+                        ta.select();
+                        document.execCommand('copy');
+                        ta.remove();
+                        doOpen();
+                    });
+            } else {
+                /* Older browsers */
+                const ta = document.createElement('textarea');
+                ta.value = scoreboardUrl;
+                ta.style.cssText = 'position:fixed;opacity:0;pointer-events:none';
+                document.body.appendChild(ta);
+                ta.select();
+                document.execCommand('copy');
+                ta.remove();
+                doOpen();
+            }
         });
 
         /* ── Start game ── */
