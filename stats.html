@@ -767,12 +767,14 @@
             renderGames(q ? allGamesData.filter(g => filterGame(g, q)) : allGamesData);
         });
 
+        const CHART_COLORS = ['#60a5fa','#f472b6','#34d399','#fbbf24','#a78bfa','#fb923c','#38bdf8','#e879f9'];
+
         function renderRankings(players) {
             const sorted = [...players].sort((a, b) => a.rank - b.rank);
-            return sorted.map(p => `
+            return sorted.map((p, i) => `
                 <div class="ranking-row rank-${p.rank}">
                     <span class="rank-badge">#${p.rank}</span>
-                    <span class="rank-name">${escapeHtml(p.name)}</span>
+                    <span class="rank-name" style="color:${CHART_COLORS[i % CHART_COLORS.length]}">${escapeHtml(p.name)}</span>
                     ${p.won ? '<span class="won-badge">Winner</span>' : ''}
                     <span class="rank-score">${p.totalScore} pts</span>
                 </div>
@@ -780,7 +782,7 @@
         }
 
         function renderRoundsChart(players, rankingOrder) {
-            const COLORS = ['#60a5fa','#f472b6','#34d399','#fbbf24','#a78bfa','#fb923c','#38bdf8','#e879f9'];
+            const COLORS = CHART_COLORS;
 
             /* normalise Firebase object-arrays back to real arrays */
             const sorted = [...players].sort((a, b) => a.rank - b.rank);
