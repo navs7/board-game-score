@@ -160,14 +160,39 @@
             padding-top: 12px;
             border-top: 1px solid var(--border);
         }
+        .rounds-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 8px;
+        }
         .rounds-label {
             font-size: 0.75rem;
             font-weight: 700;
             color: var(--text-muted);
             text-transform: uppercase;
             letter-spacing: 0.05em;
-            margin-bottom: 6px;
         }
+        .chart-mode-toggle { display: flex; gap: 4px; }
+        .chart-mode-btn {
+            font-size: 0.68rem;
+            font-weight: 600;
+            padding: 3px 9px;
+            border-radius: 12px;
+            border: 1px solid var(--border);
+            background: transparent;
+            color: var(--text-muted);
+            cursor: pointer;
+            font-family: 'Inter', sans-serif;
+            transition: background 0.15s, color 0.15s, border-color 0.15s;
+        }
+        .chart-mode-btn.active {
+            background: var(--primary);
+            color: #fff;
+            border-color: var(--primary);
+        }
+        .rounds-section[data-mode="round"] .chart-cumul { display: none; }
+        .rounds-section[data-mode="cumul"]  .chart-round  { display: none; }
         .rounds-chart {
             width: 100%;
             height: auto;
@@ -784,76 +809,77 @@
         function renderRoundsChart(players, rankingOrder) {
             const COLORS = CHART_COLORS;
 
-            /* normalise Firebase object-arrays back to real arrays */
+            /* normalise Firebase object-arrays */
             const sorted = [...players].sort((a, b) => a.rank - b.rank);
             const histories = sorted.map(p =>
-                p.history
-                    ? (Array.isArray(p.history) ? p.history : Object.values(p.history))
-                    : []
+                p.history ? (Array.isArray(p.history) ? p.history : Object.values(p.history)) : []
             );
             const numRounds = Math.max(...histories.map(h => h.length), 0);
             if (numRounds === 0) return '';
 
-            /* chart dimensions */
-            const W = 500, H = 190;
-            const padL = 40, padR = 14, padT = 14, padB = 30;
-            const plotW = W - padL - padR;
-            const plotH = H - padT - padB;
-
-            /* Y scale */
-            const allScores = histories.flat().filter(s => s !== undefined && s !== null);
-            let minY = Math.min(...allScores);
-            let maxY = Math.max(...allScores);
-            if (minY === maxY) { minY -= 5; maxY += 5; }
-            const yRange = maxY - minY;
-            minY = minY - yRange * 0.12;
-            maxY = maxY + yRange * 0.12;
-
-            const xOf = r => numRounds === 1 ? padL + plotW / 2 : padL + (r / (numRounds - 1)) * plotW;
-            const yOf = s => padT + plotH - ((s - minY) / (maxY - minY)) * plotH;
-
-            /* grid lines + Y labels (5 ticks) */
-            let grid = '', yLabels = '';
-            for (let i = 0; i <= 4; i++) {
-                const val = minY + (maxY - minY) * (i / 4);
-                const y = yOf(val);
-                grid   += `<line x1="${padL}" y1="${y.toFixed(1)}" x2="${W - padR}" y2="${y.toFixed(1)}" stroke="rgba(255,255,255,0.07)" stroke-width="1"/>`;
-                yLabels += `<text x="${padL - 5}" y="${(y + 4).toFixed(1)}" text-anchor="end" fill="rgba(255,255,255,0.32)" font-size="10">${Math.round(val)}</text>`;
-            }
-
-            /* X axis labels */
-            let xLabels = '';
-            for (let r = 0; r < numRounds; r++) {
-                const x = xOf(r);
-                xLabels += `<text x="${x.toFixed(1)}" y="${(padT + plotH + 18).toFixed(1)}" text-anchor="middle" fill="rgba(255,255,255,0.32)" font-size="10">R${r + 1}</text>`;
-            }
-
-            /* player lines + dots */
-            let lines = '';
-            sorted.forEach((p, pi) => {
-                const color = COLORS[pi % COLORS.length];
-                const hist  = histories[pi];
-                if (!hist.length) return;
-
-                const pts = hist.map((s, r) => `${xOf(r).toFixed(1)},${yOf(s).toFixed(1)}`).join(' ');
-                lines += `<polyline points="${pts}" fill="none" stroke="${color}" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round" opacity="0.9"/>`;
-                hist.forEach((s, r) => {
-                    const cx = xOf(r).toFixed(1), cy = yOf(s).toFixed(1);
-                    lines += `<circle cx="${cx}" cy="${cy}" r="4" fill="${color}" stroke="#151e2d" stroke-width="2"><title>${escapeHtml(p.name)} R${r + 1}: ${s}</title></circle>`;
-                });
+            /* cumulative histories */
+            const cumulHistories = histories.map(hist => {
+                let sum = 0;
+                return hist.map(s => (sum += s));
             });
 
-            /* legend */
+            /* shared SVG builder */
+            function buildSVG(hists) {
+                const W = 500, H = 190;
+                const padL = 42, padR = 14, padT = 14, padB = 30;
+                const plotW = W - padL - padR, plotH = H - padT - padB;
+
+                const allScores = hists.flat().filter(s => s !== undefined && s !== null);
+                if (!allScores.length) return '';
+                let minY = Math.min(...allScores), maxY = Math.max(...allScores);
+                if (minY === maxY) { minY -= 5; maxY += 5; }
+                const yr = maxY - minY;
+                minY -= yr * 0.12; maxY += yr * 0.12;
+
+                const xOf = r => numRounds === 1 ? padL + plotW / 2 : padL + (r / (numRounds - 1)) * plotW;
+                const yOf = s => padT + plotH - ((s - minY) / (maxY - minY)) * plotH;
+
+                let grid = '', yLbls = '', xLbls = '', lines = '';
+
+                for (let i = 0; i <= 4; i++) {
+                    const val = minY + (maxY - minY) * (i / 4), y = yOf(val);
+                    grid  += `<line x1="${padL}" y1="${y.toFixed(1)}" x2="${W-padR}" y2="${y.toFixed(1)}" stroke="rgba(255,255,255,0.07)" stroke-width="1"/>`;
+                    yLbls += `<text x="${padL-5}" y="${(y+4).toFixed(1)}" text-anchor="end" fill="rgba(255,255,255,0.32)" font-size="10">${Math.round(val)}</text>`;
+                }
+                for (let r = 0; r < numRounds; r++) {
+                    xLbls += `<text x="${xOf(r).toFixed(1)}" y="${(padT+plotH+18).toFixed(1)}" text-anchor="middle" fill="rgba(255,255,255,0.32)" font-size="10">R${r+1}</text>`;
+                }
+
+                sorted.forEach((p, pi) => {
+                    const color = COLORS[pi % COLORS.length], hist = hists[pi];
+                    if (!hist.length) return;
+                    const pts = hist.map((s, r) => `${xOf(r).toFixed(1)},${yOf(s).toFixed(1)}`).join(' ');
+                    lines += `<polyline points="${pts}" fill="none" stroke="${color}" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round" opacity="0.9"/>`;
+                    hist.forEach((s, r) => {
+                        lines += `<circle cx="${xOf(r).toFixed(1)}" cy="${yOf(s).toFixed(1)}" r="4" fill="${color}" stroke="#151e2d" stroke-width="2"><title>${escapeHtml(p.name)} R${r+1}: ${s}</title></circle>`;
+                    });
+                });
+
+                return `<svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" class="rounds-chart">${grid}${yLbls}${xLbls}${lines}</svg>`;
+            }
+
             const legend = sorted.map((p, pi) =>
-                `<span class="chart-legend-item"><span class="chart-legend-dot" style="background:${COLORS[pi % COLORS.length]}"></span>${escapeHtml(p.name)}</span>`
+                `<span class="chart-legend-item"><span class="chart-legend-dot" style="background:${COLORS[pi%COLORS.length]}"></span>${escapeHtml(p.name)}</span>`
             ).join('');
 
+            const toggleFn = `var s=this.closest('.rounds-section');s.dataset.mode=this.dataset.v;s.querySelectorAll('.chart-mode-btn').forEach(function(b){b.classList.toggle('active',b===this)},this)`;
+
             return `
-                <div class="rounds-section">
-                    <div class="rounds-label">Round breakdown</div>
-                    <svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" class="rounds-chart">
-                        ${grid}${yLabels}${xLabels}${lines}
-                    </svg>
+                <div class="rounds-section" data-mode="round">
+                    <div class="rounds-header">
+                        <span class="rounds-label">Round breakdown</span>
+                        <div class="chart-mode-toggle">
+                            <button class="chart-mode-btn active" data-v="round" onclick="${toggleFn}">Per Round</button>
+                            <button class="chart-mode-btn" data-v="cumul" onclick="${toggleFn}">Running Total</button>
+                        </div>
+                    </div>
+                    <div class="chart-round">${buildSVG(histories)}</div>
+                    <div class="chart-cumul">${buildSVG(cumulHistories)}</div>
                     <div class="chart-legend">${legend}</div>
                 </div>
             `;
