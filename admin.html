@@ -701,7 +701,9 @@
 
                 Object.keys(data.players).forEach(playerId => {
                     const player = data.players[playerId];
-                    const history = player.history || [];
+                    const history = player.history
+                        ? (Array.isArray(player.history) ? player.history : Object.values(player.history))
+                        : [];
                     let card = container.querySelector(`[data-player-id="${playerId}"]`);
 
                     if (!card) {
@@ -720,13 +722,18 @@
                             </div>
                             <span class="small-text player-history"></span>
                         `;
+                        card.querySelector(`#score_${escapeHtml(playerId)}`).addEventListener('keydown', (e) => {
+                            if (e.key === 'Enter') window.addScore(playerId);
+                        });
                         container.appendChild(card);
                     }
 
                     card.querySelector('.player-name').textContent = player.name;
                     card.querySelector('.player-total').textContent = player.totalScore;
                     card.querySelector('.player-history').textContent =
-                        history.length > 0 ? history.join(' → ') : 'No scores yet';
+                        history.length > 0
+                            ? history.map((s, i) => `R${i + 1}: ${s}`).join('  ·  ')
+                            : 'No scores yet';
                 });
             } else {
                 document.getElementById('new-game-section').style.display = 'block';
