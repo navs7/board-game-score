@@ -166,43 +166,33 @@
             color: var(--text-muted);
             text-transform: uppercase;
             letter-spacing: 0.05em;
-            margin-bottom: 8px;
+            margin-bottom: 6px;
         }
-        .rounds-scroll {
-            overflow-x: auto;
-            -webkit-overflow-scrolling: touch;
-        }
-        .rounds-table {
+        .rounds-chart {
             width: 100%;
-            border-collapse: collapse;
-            font-size: 0.82rem;
-            white-space: nowrap;
+            height: auto;
+            display: block;
         }
-        .rounds-table th {
-            text-align: center;
-            padding: 5px 10px;
-            color: var(--text-muted);
-            font-weight: 600;
-            border-bottom: 1px solid var(--border);
+        .chart-legend {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 4px 14px;
+            margin-top: 8px;
+            justify-content: center;
         }
-        .rounds-table th.col-round {
-            text-align: left;
-            min-width: 56px;
-        }
-        .rounds-table td {
-            text-align: center;
-            padding: 5px 10px;
-            border-bottom: 1px solid rgba(255,255,255,0.04);
-        }
-        .rounds-table td.col-round {
-            text-align: left;
+        .chart-legend-item {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            font-size: 0.74rem;
             color: var(--text-muted);
             font-weight: 600;
         }
-        .rounds-table tr:last-child td { border-bottom: none; }
-        .round-best {
-            color: #22c55e;
-            font-weight: 700;
+        .chart-legend-dot {
+            width: 9px;
+            height: 9px;
+            border-radius: 50%;
+            flex-shrink: 0;
         }
 
         /* ── Per-player round pills (inside player card game rows) ── */
@@ -739,7 +729,7 @@
                 body.className = 'card-body';
                 body.innerHTML = `<div class="winner-mode-label">${escapeHtml(winnerLabel)}</div>`
                     + renderRankings(game.players || [])
-                    + renderRoundsTable(game.players || [], game.rankingOrder);
+                    + renderRoundsChart(game.players || [], game.rankingOrder);
 
                 card.appendChild(header);
                 card.appendChild(body);
@@ -789,7 +779,9 @@
             `).join('');
         }
 
-        function renderRoundsTable(players, rankingOrder) {
+        function renderRoundsChart(players, rankingOrder) {
+            const COLORS = ['#60a5fa','#f472b6','#34d399','#fbbf24','#a78bfa','#fb923c','#38bdf8','#e879f9'];
+
             /* normalise Firebase object-arrays back to real arrays */
             const sorted = [...players].sort((a, b) => a.rank - b.rank);
             const histories = sorted.map(p =>
@@ -800,51 +792,67 @@
             const numRounds = Math.max(...histories.map(h => h.length), 0);
             if (numRounds === 0) return '';
 
-            /* header row */
-            const headerCells = sorted.map(p =>
-                `<th title="${escapeHtml(p.name)}">${escapeHtml(p.name.length > 8 ? p.name.slice(0,7) + '…' : p.name)}</th>`
-            ).join('');
+            /* chart dimensions */
+            const W = 500, H = 190;
+            const padL = 40, padR = 14, padT = 14, padB = 30;
+            const plotW = W - padL - padR;
+            const plotH = H - padT - padB;
 
-            /* one row per round */
-            const roundRows = [];
-            for (let r = 0; r < numRounds; r++) {
-                const scores = histories.map(h => h[r] ?? '—');
-                const numericScores = scores.filter(s => s !== '—');
-                let bestScore = null;
-                if (numericScores.length) {
-                    bestScore = rankingOrder === 'lowest'
-                        ? Math.min(...numericScores)
-                        : Math.max(...numericScores);
-                }
-                const cells = scores.map(s =>
-                    `<td class="${s === bestScore ? 'round-best' : ''}">${s}</td>`
-                ).join('');
-                roundRows.push(`<tr><td class="col-round">R${r + 1}</td>${cells}</tr>`);
+            /* Y scale */
+            const allScores = histories.flat().filter(s => s !== undefined && s !== null);
+            let minY = Math.min(...allScores);
+            let maxY = Math.max(...allScores);
+            if (minY === maxY) { minY -= 5; maxY += 5; }
+            const yRange = maxY - minY;
+            minY = minY - yRange * 0.12;
+            maxY = maxY + yRange * 0.12;
+
+            const xOf = r => numRounds === 1 ? padL + plotW / 2 : padL + (r / (numRounds - 1)) * plotW;
+            const yOf = s => padT + plotH - ((s - minY) / (maxY - minY)) * plotH;
+
+            /* grid lines + Y labels (5 ticks) */
+            let grid = '', yLabels = '';
+            for (let i = 0; i <= 4; i++) {
+                const val = minY + (maxY - minY) * (i / 4);
+                const y = yOf(val);
+                grid   += `<line x1="${padL}" y1="${y.toFixed(1)}" x2="${W - padR}" y2="${y.toFixed(1)}" stroke="rgba(255,255,255,0.07)" stroke-width="1"/>`;
+                yLabels += `<text x="${padL - 5}" y="${(y + 4).toFixed(1)}" text-anchor="end" fill="rgba(255,255,255,0.32)" font-size="10">${Math.round(val)}</text>`;
             }
 
-            /* totals row */
-            const totalCells = sorted.map(p => `<td>${p.totalScore}</td>`).join('');
+            /* X axis labels */
+            let xLabels = '';
+            for (let r = 0; r < numRounds; r++) {
+                const x = xOf(r);
+                xLabels += `<text x="${x.toFixed(1)}" y="${(padT + plotH + 18).toFixed(1)}" text-anchor="middle" fill="rgba(255,255,255,0.32)" font-size="10">R${r + 1}</text>`;
+            }
+
+            /* player lines + dots */
+            let lines = '';
+            sorted.forEach((p, pi) => {
+                const color = COLORS[pi % COLORS.length];
+                const hist  = histories[pi];
+                if (!hist.length) return;
+
+                const pts = hist.map((s, r) => `${xOf(r).toFixed(1)},${yOf(s).toFixed(1)}`).join(' ');
+                lines += `<polyline points="${pts}" fill="none" stroke="${color}" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round" opacity="0.9"/>`;
+                hist.forEach((s, r) => {
+                    const cx = xOf(r).toFixed(1), cy = yOf(s).toFixed(1);
+                    lines += `<circle cx="${cx}" cy="${cy}" r="4" fill="${color}" stroke="#151e2d" stroke-width="2"><title>${escapeHtml(p.name)} R${r + 1}: ${s}</title></circle>`;
+                });
+            });
+
+            /* legend */
+            const legend = sorted.map((p, pi) =>
+                `<span class="chart-legend-item"><span class="chart-legend-dot" style="background:${COLORS[pi % COLORS.length]}"></span>${escapeHtml(p.name)}</span>`
+            ).join('');
 
             return `
                 <div class="rounds-section">
                     <div class="rounds-label">Round breakdown</div>
-                    <div class="rounds-scroll">
-                        <table class="rounds-table">
-                            <thead>
-                                <tr>
-                                    <th class="col-round"></th>
-                                    ${headerCells}
-                                </tr>
-                            </thead>
-                            <tbody>
-                                ${roundRows.join('')}
-                                <tr class="totals-row">
-                                    <td class="col-round">Total</td>
-                                    ${totalCells}
-                                </tr>
-                            </tbody>
-                        </table>
-                    </div>
+                    <svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" class="rounds-chart">
+                        ${grid}${yLabels}${xLabels}${lines}
+                    </svg>
+                    <div class="chart-legend">${legend}</div>
                 </div>
             `;
         }
