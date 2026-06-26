@@ -1,0 +1,427 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Player Profile</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;800&display=swap');
+
+        :root {
+            --bg-color: #0f172a;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --card-bg: #1e293b;
+            --border: #334155;
+            --primary: #3b82f6;
+            --success: #22c55e;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--bg-color);
+            color: var(--text-main);
+            padding: 20px;
+            max-width: 640px;
+            margin: auto;
+            min-height: 100vh;
+        }
+
+        .top-bar {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            margin-bottom: 28px;
+            margin-top: 10px;
+        }
+
+        .ghost-btn {
+            cursor: pointer;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 6px 14px;
+            font-size: 0.82rem;
+            font-weight: 600;
+            background: transparent;
+            color: var(--text-muted);
+            text-decoration: none;
+            transition: color 0.2s, border-color 0.2s;
+            white-space: nowrap;
+        }
+        .ghost-btn:hover { color: var(--text-main); border-color: var(--text-muted); }
+
+        /* ── Hero ── */
+        .hero {
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 24px 20px 20px;
+            margin-bottom: 16px;
+        }
+
+        .hero-name {
+            font-size: 1.9rem;
+            font-weight: 800;
+            margin-bottom: 4px;
+        }
+
+        .hero-sub {
+            font-size: 0.82rem;
+            color: var(--text-muted);
+            margin-bottom: 20px;
+        }
+
+        .stat-row {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+        }
+
+        .stat-box {
+            background: rgba(255,255,255,0.05);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 10px 8px;
+            text-align: center;
+        }
+
+        .stat-value { font-size: 1.5rem; font-weight: 800; color: var(--primary); }
+        .stat-label { font-size: 0.7rem; color: var(--text-muted); margin-top: 3px; text-transform: uppercase; letter-spacing: 0.04em; }
+
+        /* ── Section ── */
+        .section {
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            padding: 18px;
+            margin-bottom: 14px;
+        }
+
+        .section-title {
+            font-size: 0.72rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.07em;
+            color: var(--text-muted);
+            margin-bottom: 14px;
+        }
+
+        /* ── Achievements ── */
+        .ach-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 8px;
+        }
+
+        .ach-card {
+            border-radius: 10px;
+            padding: 12px;
+            display: flex;
+            gap: 10px;
+            align-items: flex-start;
+            border: 1px solid rgba(255,255,255,0.08);
+            transition: border-color 0.2s;
+        }
+
+        .ach-card.earned {
+            background: #1a1f2e;
+            border-color: rgba(251,191,36,0.2);
+        }
+
+        .ach-card.locked {
+            background: rgba(255,255,255,0.02);
+            opacity: 0.45;
+        }
+
+        .ach-icon-wrap {
+            width: 40px;
+            height: 40px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+            flex-shrink: 0;
+        }
+
+        .ach-card.earned .ach-icon-wrap {
+            background: #2d2500;
+            border: 1px solid rgba(251,191,36,0.3);
+        }
+
+        .ach-card.locked .ach-icon-wrap {
+            background: rgba(255,255,255,0.04);
+            border: 1px solid var(--border);
+            filter: grayscale(1);
+        }
+
+        .ach-text { min-width: 0; }
+
+        .ach-name {
+            font-size: 0.82rem;
+            font-weight: 700;
+            color: var(--text-main);
+            margin-bottom: 2px;
+        }
+
+        .ach-card.locked .ach-name { color: var(--text-muted); }
+
+        .ach-desc {
+            font-size: 0.7rem;
+            color: var(--text-muted);
+            line-height: 1.35;
+        }
+
+        .ach-status {
+            font-size: 0.65rem;
+            font-weight: 700;
+            margin-top: 4px;
+        }
+
+        .ach-card.earned .ach-status { color: #fbbf24; }
+        .ach-card.locked .ach-status { color: var(--text-muted); }
+
+        /* ── Game history ── */
+        .game-row {
+            display: flex;
+            align-items: baseline;
+            flex-wrap: wrap;
+            justify-content: space-between;
+            padding: 11px 0;
+            border-bottom: 1px solid var(--border);
+            font-size: 0.88rem;
+            gap: 4px 8px;
+        }
+        .game-row:last-child { border-bottom: none; }
+        .game-name { flex: 1; font-weight: 600; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+        .won-badge {
+            font-size: 0.7rem;
+            background: rgba(34,197,94,0.15);
+            color: var(--success);
+            border: 1px solid var(--success);
+            padding: 2px 7px;
+            border-radius: 20px;
+            font-weight: 600;
+            white-space: nowrap;
+        }
+
+        .game-rank { font-size: 0.8rem; color: var(--text-muted); white-space: nowrap; }
+
+        .score-pill {
+            font-size: 0.82rem;
+            background: rgba(255,255,255,0.08);
+            padding: 3px 10px;
+            border-radius: 20px;
+            white-space: nowrap;
+        }
+
+        .game-date { font-size: 0.72rem; color: var(--text-muted); white-space: nowrap; }
+
+        .round-pills {
+            flex-basis: 100%;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 4px 6px;
+            padding-top: 5px;
+        }
+
+        .round-pill {
+            font-size: 0.68rem;
+            background: rgba(255,255,255,0.07);
+            border-radius: 4px;
+            padding: 2px 7px;
+            color: var(--text-muted);
+            font-weight: 600;
+        }
+
+        .empty-state {
+            text-align: center;
+            color: var(--text-muted);
+            font-size: 0.9rem;
+            padding: 32px 0;
+        }
+
+        .loading-msg {
+            text-align: center;
+            color: var(--text-muted);
+            padding: 60px 0;
+            font-size: 0.95rem;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="top-bar">
+        <a href="stats.html" class="ghost-btn">← Back to Stats</a>
+    </div>
+
+    <div id="loading" class="loading-msg">Loading profile…</div>
+    <div id="profile" style="display:none;">
+
+        <div class="hero">
+            <div class="hero-name" id="p-name"></div>
+            <div class="hero-sub" id="p-sub"></div>
+            <div class="stat-row">
+                <div class="stat-box">
+                    <div class="stat-value" id="p-games"></div>
+                    <div class="stat-label">Games</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-value" id="p-wins"></div>
+                    <div class="stat-label">Wins</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-value" id="p-wr"></div>
+                    <div class="stat-label">Win Rate</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-value" id="p-avg"></div>
+                    <div class="stat-label">Avg Score</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-value" id="p-best"></div>
+                    <div class="stat-label">Best Score</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-value" id="p-pts"></div>
+                    <div class="stat-label">Total Pts</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="section">
+            <div class="section-title">🎖 Achievements</div>
+            <div class="ach-grid" id="ach-grid"></div>
+        </div>
+
+        <div class="section">
+            <div class="section-title">🎮 Game History</div>
+            <div id="game-history"></div>
+        </div>
+
+    </div>
+
+    <script type="module">
+        import { db, ref, onValue } from './firebase-config.js';
+
+        const ACHIEVEMENT_DEFS = [
+            { icon: '🏆', name: 'First Victory',   desc: 'Won your first game',              check: (w,t,s,wr,pts,p3) => w  >= 1  },
+            { icon: '🎖️', name: 'High Roller',     desc: 'Won 5 games',                      check: (w,t,s,wr,pts,p3) => w  >= 5  },
+            { icon: '👑', name: 'Champion',        desc: 'Won 10 games',                     check: (w,t,s,wr,pts,p3) => w  >= 10 },
+            { icon: '🔥', name: 'Hat Trick',       desc: 'Won 3 games in a row',             check: (w,t,s,wr,pts,p3) => s  >= 3  },
+            { icon: '⚡', name: 'Unstoppable',     desc: 'Won 5 games in a row',             check: (w,t,s,wr,pts,p3) => s  >= 5  },
+            { icon: '💎', name: 'Titan',           desc: 'Won 10 games in a row',            check: (w,t,s,wr,pts,p3) => s  >= 10 },
+            { icon: '🎯', name: 'Sharp Shooter',   desc: '75%+ win rate (min 5 games)',      check: (w,t,s,wr,pts,p3) => t  >= 5 && wr >= 75 },
+            { icon: '🛡️', name: 'Veteran',         desc: 'Played 25 games',                  check: (w,t,s,wr,pts,p3) => t  >= 25 },
+            { icon: '🏃', name: 'Marathon Runner', desc: 'Played 50 games',                  check: (w,t,s,wr,pts,p3) => t  >= 50 },
+            { icon: '🥉', name: 'Podium Regular',  desc: 'Finished top 3 in 15 games',      check: (w,t,s,wr,pts,p3) => p3 >= 15 },
+            { icon: '💯', name: 'Century Club',    desc: 'Scored 1000+ total points',        check: (w,t,s,wr,pts,p3) => pts >= 1000 },
+            { icon: '🌟', name: 'Elite',           desc: '90%+ win rate (min 10 games)',     check: (w,t,s,wr,pts,p3) => t  >= 10 && wr >= 90 },
+        ];
+
+        function computeStats(games) {
+            const sorted = [...games].sort((a, b) => (a.endedAt || 0) - (b.endedAt || 0));
+            const total  = sorted.length;
+            const wins   = sorted.filter(g => g.won).length;
+            const wr     = total > 0 ? Math.round((wins / total) * 100) : 0;
+            const avg    = total > 0 ? Math.round(games.reduce((s, g) => s + (g.score || 0), 0) / total) : 0;
+            const best   = games.reduce((b, g) => Math.max(b, g.score || 0), 0);
+            const pts    = games.reduce((s, g) => s + (g.score || 0), 0);
+            const p3     = games.filter(g => g.rank <= 3).length;
+            let streak = 0, maxStreak = 0;
+            sorted.forEach(g => {
+                if (g.won) { streak++; maxStreak = Math.max(maxStreak, streak); }
+                else streak = 0;
+            });
+            const firstGame = sorted[0];
+            return { total, wins, wr, avg, best, pts, p3, maxStreak, firstGame };
+        }
+
+        function formatDate(ts) {
+            if (!ts) return '';
+            return new Date(ts).toLocaleDateString('en-GB', { day:'numeric', month:'short', year:'numeric' });
+        }
+
+        const params = new URLSearchParams(window.location.search);
+        const playerKey = params.get('key');
+
+        if (!playerKey) {
+            document.getElementById('loading').textContent = 'No player selected.';
+        } else {
+            onValue(ref(db, `playerRecords/${playerKey}`), snap => {
+                const data = snap.val();
+                if (!data) {
+                    document.getElementById('loading').textContent = 'Player not found.';
+                    return;
+                }
+
+                const games = data.games
+                    ? Object.entries(data.games).map(([id, g]) => ({ id, ...g }))
+                    : [];
+                games.sort((a, b) => (b.endedAt || 0) - (a.endedAt || 0));
+
+                const { total, wins, wr, avg, best, pts, p3, maxStreak, firstGame } = computeStats(games);
+
+                document.title = `${data.name} — Profile`;
+                document.getElementById('p-name').textContent = data.name;
+                document.getElementById('p-sub').textContent = firstGame
+                    ? `First game: ${formatDate(firstGame.endedAt)}`
+                    : 'No games played yet';
+                document.getElementById('p-games').textContent = total;
+                document.getElementById('p-wins').textContent = wins;
+                document.getElementById('p-wr').textContent   = `${wr}%`;
+                document.getElementById('p-avg').textContent  = avg;
+                document.getElementById('p-best').textContent = best;
+                document.getElementById('p-pts').textContent  = pts;
+
+                /* achievements */
+                const achGrid = document.getElementById('ach-grid');
+                achGrid.innerHTML = ACHIEVEMENT_DEFS.map(a => {
+                    const earned = a.check(wins, total, maxStreak, wr, pts, p3);
+                    return `
+                    <div class="ach-card ${earned ? 'earned' : 'locked'}">
+                        <div class="ach-icon-wrap">${a.icon}</div>
+                        <div class="ach-text">
+                            <div class="ach-name">${a.name}</div>
+                            <div class="ach-desc">${a.desc}</div>
+                            <div class="ach-status">${earned ? '✓ Earned' : '🔒 Locked'}</div>
+                        </div>
+                    </div>`;
+                }).join('');
+
+                /* game history */
+                const hist = document.getElementById('game-history');
+                if (games.length === 0) {
+                    hist.innerHTML = '<div class="empty-state">No games played yet.</div>';
+                } else {
+                    hist.innerHTML = games.map(g => {
+                        const rounds = g.roundHistory
+                            ? (Array.isArray(g.roundHistory) ? g.roundHistory : Object.values(g.roundHistory))
+                            : [];
+                        const pills = rounds.length
+                            ? `<div class="round-pills">${rounds.map((s,i) => `<span class="round-pill">R${i+1}: ${s}</span>`).join('')}</div>`
+                            : '';
+                        return `
+                        <div class="game-row">
+                            <span class="game-name">${g.gameName || '—'}</span>
+                            ${g.won ? '<span class="won-badge">🏆 Won</span>' : ''}
+                            <span class="game-rank">#${g.rank} of ${g.totalPlayers}</span>
+                            <span class="score-pill">${g.score} pts</span>
+                            <span class="game-date">${formatDate(g.endedAt)}</span>
+                            ${pills}
+                        </div>`;
+                    }).join('');
+                }
+
+                document.getElementById('loading').style.display = 'none';
+                document.getElementById('profile').style.display = 'block';
+            });
+        }
+    </script>
+</body>
+</html>

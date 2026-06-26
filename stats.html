@@ -339,7 +339,67 @@
             opacity: 0.75;
         }
 
-        /* ── Achievements ── */
+        /* ── Player summary cards (Players tab) ── */
+        .player-summary-card {
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            justify-content: space-between;
+            transition: border-color 0.2s;
+        }
+
+        .player-summary-card:hover { border-color: var(--primary); }
+
+        .pscard-left { flex: 1; min-width: 0; }
+
+        .pscard-name {
+            font-size: 1rem;
+            font-weight: 700;
+            margin-bottom: 3px;
+        }
+
+        .pscard-stats {
+            font-size: 0.78rem;
+            color: var(--text-muted);
+            margin-bottom: 6px;
+        }
+
+        .pscard-ach {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 3px;
+            line-height: 1;
+        }
+
+        .pscard-right {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
+            gap: 6px;
+            flex-shrink: 0;
+        }
+
+        .view-profile-btn {
+            display: inline-block;
+            padding: 7px 14px;
+            background: var(--primary);
+            color: #fff;
+            font-size: 0.8rem;
+            font-weight: 700;
+            border-radius: 8px;
+            text-decoration: none;
+            white-space: nowrap;
+            transition: opacity 0.2s;
+        }
+
+        .view-profile-btn:hover { opacity: 0.85; }
+
+        /* ── Achievements (kept for any future use) ── */
         .achievements-section {
             margin: 14px 0 10px;
         }
@@ -1037,15 +1097,21 @@
         });
 
         const ACHIEVEMENT_DEFS = [
-            { id: 'first_win',     icon: '🏆', name: 'First Victory',  desc: 'Won your first game',   check: (w, t, s) => w >= 1  },
-            { id: 'high_roller',   icon: '🎖️', name: 'High Roller',    desc: 'Won 5 games',           check: (w, t, s) => w >= 5  },
-            { id: 'champion',      icon: '👑', name: 'Champion',       desc: 'Won 10 games',          check: (w, t, s) => w >= 10 },
-            { id: 'veteran',       icon: '🛡️', name: 'Veteran',        desc: 'Played 25 games',       check: (w, t, s) => t >= 25 },
-            { id: 'hat_trick',     icon: '🔥', name: 'Hat Trick',      desc: 'Won 3 games in a row',  check: (w, t, s) => s >= 3  },
-            { id: 'unstoppable',   icon: '⚡', name: 'Unstoppable',    desc: 'Won 5 games in a row',  check: (w, t, s) => s >= 5  },
+            { icon: '🏆', name: 'First Victory',   desc: 'Won your first game',             check: (w,t,s,wr,pts,p3) => w  >= 1  },
+            { icon: '🎖️', name: 'High Roller',     desc: 'Won 5 games',                     check: (w,t,s,wr,pts,p3) => w  >= 5  },
+            { icon: '👑', name: 'Champion',        desc: 'Won 10 games',                    check: (w,t,s,wr,pts,p3) => w  >= 10 },
+            { icon: '🔥', name: 'Hat Trick',       desc: 'Won 3 games in a row',            check: (w,t,s,wr,pts,p3) => s  >= 3  },
+            { icon: '⚡', name: 'Unstoppable',     desc: 'Won 5 games in a row',            check: (w,t,s,wr,pts,p3) => s  >= 5  },
+            { icon: '💎', name: 'Titan',           desc: 'Won 10 games in a row',           check: (w,t,s,wr,pts,p3) => s  >= 10 },
+            { icon: '🎯', name: 'Sharp Shooter',   desc: '75%+ win rate (min 5 games)',     check: (w,t,s,wr,pts,p3) => t  >= 5 && wr >= 75 },
+            { icon: '🛡️', name: 'Veteran',         desc: 'Played 25 games',                 check: (w,t,s,wr,pts,p3) => t  >= 25 },
+            { icon: '🏃', name: 'Marathon Runner', desc: 'Played 50 games',                 check: (w,t,s,wr,pts,p3) => t  >= 50 },
+            { icon: '🥉', name: 'Podium Regular',  desc: 'Top 3 finish in 15 games',       check: (w,t,s,wr,pts,p3) => p3 >= 15 },
+            { icon: '💯', name: 'Century Club',    desc: 'Scored 1000+ total points',      check: (w,t,s,wr,pts,p3) => pts >= 1000 },
+            { icon: '🌟', name: 'Elite',           desc: '90%+ win rate (min 10 games)',    check: (w,t,s,wr,pts,p3) => t  >= 10 && wr >= 90 },
         ];
 
-        function getAchievements(games) {
+        function computeAchievementArgs(games) {
             const sorted = [...games].sort((a, b) => (a.endedAt || 0) - (b.endedAt || 0));
             const wins = sorted.filter(g => g.won).length;
             const total = sorted.length;
@@ -1054,7 +1120,10 @@
                 if (g.won) { streak++; maxStreak = Math.max(maxStreak, streak); }
                 else streak = 0;
             });
-            return ACHIEVEMENT_DEFS.filter(a => a.check(wins, total, maxStreak));
+            const wr  = total > 0 ? Math.round((wins / total) * 100) : 0;
+            const pts = games.reduce((s, g) => s + (g.score || 0), 0);
+            const p3  = games.filter(g => g.rank <= 3).length;
+            return [wins, total, maxStreak, wr, pts, p3];
         }
 
         function renderPlayers(players) {
@@ -1070,59 +1139,35 @@
                 const games = player.games
                     ? Object.entries(player.games).map(([id, g]) => ({ id, ...g }))
                     : [];
-                games.sort((a, b) => (b.endedAt || 0) - (a.endedAt || 0));
 
                 const totalGames = games.length;
                 const wins = games.filter(g => g.won).length;
-                const avgScore = totalGames > 0
-                    ? Math.round(games.reduce((sum, g) => sum + (g.score || 0), 0) / totalGames)
+                const wr   = totalGames > 0 ? Math.round((wins / totalGames) * 100) : 0;
+                const avg  = totalGames > 0
+                    ? Math.round(games.reduce((s, g) => s + (g.score || 0), 0) / totalGames)
                     : 0;
 
-                const wonGames = games.filter(g => g.won);
-                const bestWin = wonGames.length
-                    ? wonGames.reduce((best, g) => {
-                        const gBetter = g.winnerLabel === 'Lowest Score Wins'
-                            ? g.score < best.score
-                            : g.score > best.score;
-                        return gBetter ? g : best;
-                    })
-                    : null;
-
-                const gameRows = games.map(g => {
-                    const rounds = g.roundHistory
-                        ? (Array.isArray(g.roundHistory) ? g.roundHistory : Object.values(g.roundHistory))
-                        : [];
-                    const roundPills = rounds.length
-                        ? `<div class="player-rounds">${rounds.map((s, i) => `<span class="round-pill">R${i + 1}: ${s}</span>`).join('')}</div>`
-                        : '';
-                    return `
-                    <div class="game-row">
-                        <span class="game-name">${escapeHtml(g.gameName)}</span>
-                        ${g.won ? `<span class="won-badge game-winner">🏆 Won</span>` : ''}
-                        <span class="game-rank">#${g.rank} of ${g.totalPlayers}</span>
-                        <span class="rank-score">${g.score} pts</span>
-                        <span style="font-size:0.75rem;color:var(--text-muted);white-space:nowrap;">${formatDate(g.endedAt)}</span>
-                        ${roundPills}
-                    </div>`;
-                }).join('') || '<div style="color:var(--text-muted);font-size:0.85rem;padding:8px 0;">No game history.</div>';
+                const args   = computeAchievementArgs(games);
+                const earned = ACHIEVEMENT_DEFS.filter(a => a.check(...args));
+                const achBadges = earned.map(a =>
+                    `<span title="${escapeHtml(a.name)}" style="font-size:1rem;">${a.icon}</span>`
+                ).join('');
 
                 const card = document.createElement('div');
-                card.className = 'card';
-
-                const header = document.createElement('div');
-                header.className = 'card-header';
-                header.innerHTML = `
-                    <div class="card-header-left">
-                        <div class="card-title">${escapeHtml(player.name)}</div>
-                        <div class="card-subtitle">${totalGames} game${totalGames !== 1 ? 's' : ''} played</div>
+                card.className = 'player-summary-card';
+                card.innerHTML = `
+                    <div class="pscard-left">
+                        <div class="pscard-name">${escapeHtml(player.name)}</div>
+                        <div class="pscard-stats">${totalGames} game${totalGames !== 1 ? 's' : ''} &middot; ${wins} win${wins !== 1 ? 's' : ''} &middot; ${wr}% win rate &middot; avg ${avg}</div>
+                        <div class="pscard-ach">${achBadges || '<span style="font-size:0.72rem;color:var(--text-muted);">No achievements yet</span>'}</div>
                     </div>
-                    <div class="card-header-right">
-                        <span class="card-meta">${wins} win${wins !== 1 ? 's' : ''}</span>
+                    <div class="pscard-right">
+                        <a href="player.html?key=${encodeURIComponent(player.key)}" class="view-profile-btn" onclick="event.stopPropagation()">View Profile →</a>
                         <button class="delete-btn" title="Delete this player">🗑️</button>
                     </div>
                 `;
 
-                const deleteBtn = header.querySelector('.delete-btn');
+                const deleteBtn = card.querySelector('.delete-btn');
                 deleteBtn.addEventListener('click', async (e) => {
                     e.stopPropagation();
                     const ok = await confirmDelete(
@@ -1133,53 +1178,6 @@
                     remove(ref(db, `playerRecords/${player.key}`));
                 });
 
-                const body = document.createElement('div');
-                body.className = 'card-body';
-                const bestWinHtml = bestWin
-                    ? `<div class="stat-value">${bestWin.score}</div>
-                       <div class="stat-label">Best Win</div>
-                       <div class="stat-sublabel" title="${escapeHtml(bestWin.gameName)}">${escapeHtml(bestWin.gameName)}</div>`
-                    : `<div class="stat-value" style="font-size:1rem;opacity:0.4">—</div>
-                       <div class="stat-label">Best Win</div>`;
-
-                const earned = getAchievements(games);
-                const achievementsHtml = earned.length
-                    ? `<div class="achievements-grid">${earned.map(a => `
-                        <div class="achievement-card">
-                            <div class="achievement-icon-wrap">${a.icon}</div>
-                            <div class="achievement-text">
-                                <div class="achievement-name">${a.name}</div>
-                                <div class="achievement-desc">${a.desc}</div>
-                            </div>
-                        </div>`).join('')}</div>`
-                    : `<div class="achievements-empty">No achievements yet — keep playing!</div>`;
-
-                body.innerHTML = `
-                    <div class="stat-grid">
-                        <div class="stat-box">
-                            <div class="stat-value">${totalGames}</div>
-                            <div class="stat-label">Games</div>
-                        </div>
-                        <div class="stat-box">
-                            <div class="stat-value">${wins}</div>
-                            <div class="stat-label">Wins</div>
-                        </div>
-                        <div class="stat-box">
-                            <div class="stat-value">${avgScore}</div>
-                            <div class="stat-label">Avg Score</div>
-                        </div>
-                        <div class="stat-box">${bestWinHtml}</div>
-                    </div>
-                    <div class="achievements-section">
-                        <div class="achievements-label">🎖 Achievements</div>
-                        ${achievementsHtml}
-                    </div>
-                    <div>${gameRows}</div>
-                `;
-
-                card.appendChild(header);
-                card.appendChild(body);
-                card.addEventListener('click', () => card.classList.toggle('open'));
                 container.appendChild(card);
             });
         }
