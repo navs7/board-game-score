@@ -195,6 +195,72 @@
             .rank { font-size: 1.25rem; }
         }
 
+        /* ── Live chart ── */
+        #chart-section {
+            display: none;
+            width: 100%;
+            max-width: 500px;
+            margin-top: 24px;
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            padding: 16px;
+        }
+
+        .chart-title {
+            font-size: 0.72rem;
+            font-weight: 700;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            margin-bottom: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .chart-title span { font-weight: 400; text-transform: none; letter-spacing: 0; font-size: 0.68rem; }
+
+        .live-chart { width: 100%; height: auto; display: block; overflow: visible; }
+
+        .chart-legend {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 4px 14px;
+            margin-top: 8px;
+            justify-content: center;
+        }
+        .chart-legend-item {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            font-size: 0.74rem;
+            color: var(--text-muted);
+            font-weight: 600;
+        }
+        .chart-legend-dot {
+            width: 9px; height: 9px;
+            border-radius: 50%;
+            flex-shrink: 0;
+        }
+
+        /* Bar grow from baseline */
+        @keyframes barGrow {
+            from { transform: scaleY(0); }
+            to   { transform: scaleY(1); }
+        }
+        /* Line draw (stroke-dashoffset) */
+        @keyframes lineDraw {
+            from { stroke-dashoffset: 1200; }
+            to   { stroke-dashoffset: 0; }
+        }
+        /* Dot pop */
+        @keyframes dotPop {
+            0%   { r: 0; opacity: 0; }
+            60%  { r: 6px; }
+            100% { r: 4px; opacity: 1; }
+        }
+
         /* ── Waiting screen ── */
         #waiting-screen {
             display: none;
@@ -329,6 +395,12 @@
 
     <div class="leaderboard" id="leaderboard"></div>
 
+    <div id="chart-section">
+        <div class="chart-title">Round breakdown &amp; progression <span>bars = per round · line = cumulative</span></div>
+        <svg id="live-chart-svg" class="live-chart" viewBox="0 0 500 210" xmlns="http://www.w3.org/2000/svg"></svg>
+        <div class="chart-legend" id="chart-legend"></div>
+    </div>
+
     <div class="footer-links">
         <a href="stats.html?from=scoreboard" class="footer-link">📊 Stats &amp; History</a>
         <button class="footer-btn" id="shareBtn">🔗 Share Scoreboard</button>
@@ -350,10 +422,113 @@
         let prevRoundCount = 0;    /* last known completed round count */
         let isFirstRender  = true;
 
+        const CHART_COLORS = ['#60a5fa','#f472b6','#34d399','#fbbf24','#a78bfa','#fb923c','#38bdf8','#e879f9'];
+
         function rearm(el, cls) {
             el.classList.remove(cls);
             void el.offsetWidth;
             el.classList.add(cls);
+        }
+
+        function renderLiveChart(playersArray, rankingOrder) {
+            const chartSection = document.getElementById('chart-section');
+            const svg = document.getElementById('live-chart-svg');
+            const legendEl = document.getElementById('chart-legend');
+
+            const histories = playersArray.map(p => {
+                if (!p.history) return [];
+                if (Array.isArray(p.history)) return p.history;
+                return Object.values(p.history);
+            });
+            const numRounds = Math.max(...histories.map(h => h.length), 0);
+            if (numRounds === 0) { chartSection.style.display = 'none'; return; }
+
+            chartSection.style.display = 'block';
+
+            const cumulatives = histories.map(hist => {
+                let sum = 0;
+                return hist.map(s => { sum += (s || 0); return sum; });
+            });
+
+            const W = 500, H = 210;
+            const padL = 44, padR = 16, padT = 16, padB = 30;
+            const plotW = W - padL - padR, plotH = H - padT - padB;
+
+            const allRound = histories.flat().filter(s => s != null);
+            const allCumul = cumulatives.flat().filter(s => s != null);
+            let minY = Math.min(0, ...allRound);
+            let maxY = Math.max(10, ...allCumul);
+            const range = maxY - minY || 10;
+            minY -= range * 0.08;
+            maxY += range * 0.12;
+
+            const yOf   = s => padT + plotH - ((s - minY) / (maxY - minY)) * plotH;
+            const yBase = yOf(0);
+            const groupW = plotW / numRounds;
+            const barGap = 2;
+            const barW   = Math.max(2, (groupW - barGap * (playersArray.length + 1)) / playersArray.length);
+
+            let out = '';
+
+            /* grid */
+            for (let i = 0; i <= 4; i++) {
+                const v = minY + (maxY - minY) * (i / 4), y = yOf(v);
+                out += `<line x1="${padL}" y1="${y.toFixed(1)}" x2="${W-padR}" y2="${y.toFixed(1)}" stroke="rgba(255,255,255,0.07)" stroke-width="1"/>`;
+                out += `<text x="${padL-5}" y="${(y+4).toFixed(1)}" text-anchor="end" fill="rgba(255,255,255,0.32)" font-size="10">${Math.round(v)}</text>`;
+            }
+
+            /* round labels */
+            for (let r = 0; r < numRounds; r++) {
+                const cx = padL + r * groupW + groupW / 2;
+                out += `<text x="${cx.toFixed(1)}" y="${(padT+plotH+18).toFixed(1)}" text-anchor="middle" fill="rgba(255,255,255,0.32)" font-size="10">R${r+1}</text>`;
+            }
+
+            /* animated bars (per-round) */
+            for (let r = 0; r < numRounds; r++) {
+                const groupX = padL + r * groupW;
+                playersArray.forEach((p, pi) => {
+                    const color = CHART_COLORS[pi % CHART_COLORS.length];
+                    const score = (histories[pi] || [])[r];
+                    if (score == null) return;
+                    const bx = groupX + barGap + pi * (barW + barGap);
+                    const bh = Math.max(1, Math.abs(yOf(score) - yBase));
+                    const by = score >= 0 ? yOf(score) : yBase;
+                    const delay = ((r * 60 + pi * 25) / 1000).toFixed(3);
+                    out += `<rect x="${bx.toFixed(1)}" y="${yBase.toFixed(1)}" width="${barW.toFixed(1)}" height="0" fill="${color}" opacity="0.6" rx="2">
+                        <animate attributeName="height" from="0" to="${bh.toFixed(1)}" dur="0.45s" begin="${delay}s" fill="freeze" calcMode="spline" keySplines="0.22 1 0.36 1"/>
+                        <animate attributeName="y" from="${yBase.toFixed(1)}" to="${by.toFixed(1)}" dur="0.45s" begin="${delay}s" fill="freeze" calcMode="spline" keySplines="0.22 1 0.36 1"/>
+                    </rect>`;
+                });
+            }
+
+            /* animated lines + dots (cumulative) — start after bars */
+            const lineBase = ((numRounds * 60 + 100) / 1000).toFixed(3);
+            playersArray.forEach((p, pi) => {
+                const color = CHART_COLORS[pi % CHART_COLORS.length];
+                const cumul = cumulatives[pi];
+                if (!cumul.length) return;
+                const pts = cumul.map((s, r) => `${(padL + r * groupW + groupW/2).toFixed(1)},${yOf(s).toFixed(1)}`).join(' ');
+                const lineDelay = (parseFloat(lineBase) + pi * 0.1).toFixed(3);
+                out += `<polyline points="${pts}" fill="none" stroke="${color}" stroke-width="2.5"
+                    stroke-linejoin="round" stroke-linecap="round"
+                    stroke-dasharray="1200" stroke-dashoffset="1200" opacity="0">
+                    <animate attributeName="stroke-dashoffset" from="1200" to="0" dur="0.85s" begin="${lineDelay}s" fill="freeze" calcMode="spline" keySplines="0.25 1 0.5 1"/>
+                    <animate attributeName="opacity" from="0" to="0.95" dur="0.05s" begin="${lineDelay}s" fill="freeze"/>
+                </polyline>`;
+                cumul.forEach((s, r) => {
+                    const cx = (padL + r * groupW + groupW / 2).toFixed(1);
+                    const cy = yOf(s).toFixed(1);
+                    const dotDelay = (parseFloat(lineDelay) + 0.55 + r * 0.09).toFixed(3);
+                    out += `<circle cx="${cx}" cy="${cy}" r="0" fill="${color}" stroke="#151e2d" stroke-width="2">
+                        <animate attributeName="r" values="0;6;4" dur="0.28s" begin="${dotDelay}s" fill="freeze" calcMode="spline" keySplines="0.22 1 0.36 1;0.4 0 1 1"/>
+                    </circle>`;
+                });
+            });
+
+            svg.innerHTML = out;
+            legendEl.innerHTML = playersArray.map((p, pi) =>
+                `<span class="chart-legend-item"><span class="chart-legend-dot" style="background:${CHART_COLORS[pi%CHART_COLORS.length]}"></span>${p.name}</span>`
+            ).join('');
         }
 
         onValue(gameRef, (snapshot) => {
@@ -366,6 +541,7 @@
                 waiting.classList.add('visible');
                 titleEl.style.display = 'none';
                 leaderboard.innerHTML = '';
+                document.getElementById('chart-section').style.display = 'none';
                 prevRanks      = {};
                 prevScores     = {};
                 streaks        = {};
@@ -515,6 +691,8 @@
             prevRanks  = newRanks;
             prevScores = newScores;
             isFirstRender = false;
+
+            renderLiveChart(playersArray, data.rankingOrder);
         });
     </script>
 
