@@ -802,6 +802,8 @@
             const plotW = W - padL - padR, plotH = H - padT - padB;
 
             const allScores = histories.flat().filter(s => s !== undefined && s !== null);
+
+            /* ── Line chart ── */
             let minY = Math.min(...allScores), maxY = Math.max(...allScores);
             if (minY === maxY) { minY -= 5; maxY += 5; }
             const yr = maxY - minY;
@@ -831,6 +833,43 @@
                 });
             });
 
+            /* ── Bar chart ── */
+            const BH = 160, BpadT = 10, BpadB = 28;
+            const BplotH = BH - BpadT - BpadB;
+            let barMaxY = Math.max(...allScores);
+            let barMinY = Math.min(0, Math.min(...allScores));
+            if (barMaxY === barMinY) barMaxY = barMinY + 5;
+            barMaxY *= 1.12;
+
+            const byOf = s => BpadT + BplotH - ((s - barMinY) / (barMaxY - barMinY)) * BplotH;
+            const byBase = byOf(0);
+            const groupW = plotW / numRounds;
+            const numPlayers = sorted.length;
+            const barGap = 2;
+            const barW = Math.max(2, (groupW - barGap * (numPlayers + 1)) / numPlayers);
+
+            let bgrid = '', byLbls = '', bxLbls = '', bars = '';
+
+            for (let i = 0; i <= 4; i++) {
+                const val = barMinY + (barMaxY - barMinY) * (i / 4), y = byOf(val);
+                bgrid  += `<line x1="${padL}" y1="${y.toFixed(1)}" x2="${W-padR}" y2="${y.toFixed(1)}" stroke="rgba(255,255,255,0.07)" stroke-width="1"/>`;
+                byLbls += `<text x="${padL-5}" y="${(y+4).toFixed(1)}" text-anchor="end" fill="rgba(255,255,255,0.32)" font-size="10">${Math.round(val)}</text>`;
+            }
+
+            for (let r = 0; r < numRounds; r++) {
+                const groupX = padL + r * groupW;
+                bxLbls += `<text x="${(groupX + groupW/2).toFixed(1)}" y="${(BpadT+BplotH+18).toFixed(1)}" text-anchor="middle" fill="rgba(255,255,255,0.32)" font-size="10">R${r+1}</text>`;
+                sorted.forEach((p, pi) => {
+                    const color = COLORS[pi % COLORS.length], hist = histories[pi];
+                    const score = hist[r];
+                    if (score === undefined || score === null) return;
+                    const bx = groupX + barGap + pi * (barW + barGap);
+                    const bh = Math.abs(byOf(score) - byBase);
+                    const by = score >= 0 ? byOf(score) : byBase;
+                    bars += `<rect x="${bx.toFixed(1)}" y="${by.toFixed(1)}" width="${barW.toFixed(1)}" height="${Math.max(1,bh).toFixed(1)}" fill="${color}" opacity="0.8" rx="2"><title>${escapeHtml(p.name)} R${r+1}: ${score}</title></rect>`;
+                });
+            }
+
             const legend = sorted.map((p, pi) =>
                 `<span class="chart-legend-item"><span class="chart-legend-dot" style="background:${COLORS[pi%COLORS.length]}"></span>${escapeHtml(p.name)}</span>`
             ).join('');
@@ -838,9 +877,13 @@
             return `
                 <div class="rounds-section">
                     <div class="rounds-header">
-                        <span class="rounds-label">Round breakdown</span>
+                        <span class="rounds-label">Game progression</span>
                     </div>
                     <svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" class="rounds-chart">${grid}${yLbls}${xLbls}${lines}</svg>
+                    <div class="rounds-header" style="margin-top:14px;">
+                        <span class="rounds-label">Per-round scores</span>
+                    </div>
+                    <svg viewBox="0 0 ${W} ${BH}" xmlns="http://www.w3.org/2000/svg" class="rounds-chart">${bgrid}${byLbls}${bxLbls}${bars}</svg>
                     <div class="chart-legend">${legend}</div>
                 </div>
             `;
@@ -974,7 +1017,7 @@
                     const rounds = g.roundHistory
                         ? (Array.isArray(g.roundHistory) ? g.roundHistory : Object.values(g.roundHistory))
                         : [];
-                    const roundPills = (g.won && rounds.length)
+                    const roundPills = rounds.length
                         ? `<div class="player-rounds">${rounds.map((s, i) => `<span class="round-pill">R${i + 1}: ${s}</span>`).join('')}</div>`
                         : '';
                     return `

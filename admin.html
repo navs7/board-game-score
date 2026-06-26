@@ -339,6 +339,55 @@
         @media (max-width: 480px) {
             #playersContainer { grid-template-columns: 1fr; }
         }
+
+        .btn-row-2x2 {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+
+        @media (max-width: 480px) {
+            .btn-row-2x2 { grid-template-columns: 1fr; }
+        }
+
+        .paused-game-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+            padding: 10px 0;
+            border-bottom: 1px solid var(--border);
+        }
+        .paused-game-item:last-child { border-bottom: none; }
+        .paused-game-info { flex: 1; min-width: 0; }
+        .paused-game-name {
+            font-weight: 700;
+            font-size: 0.95rem;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        .paused-game-sub {
+            font-size: 0.78rem;
+            color: var(--text-muted);
+            margin-top: 2px;
+        }
+        .paused-game-actions { display: flex; gap: 6px; flex-shrink: 0; }
+        .btn-sm {
+            cursor: pointer;
+            padding: 6px 12px;
+            font-size: 0.82rem;
+            font-weight: 600;
+            border: none;
+            border-radius: 7px;
+            transition: background-color 0.2s;
+        }
+        .btn-sm-primary { background: var(--primary); color: white; }
+        .btn-sm-primary:hover { background: var(--primary-hover); }
+        .btn-sm-danger { background: transparent; border: 1px solid var(--border); color: var(--text-muted); }
+        .btn-sm-danger:hover { border-color: var(--danger); color: var(--danger); }
+        .btn-pause { background-color: #7c3aed; color: white; }
+        .btn-pause:hover { background-color: #6d28d9; }
     </style>
 </head>
 <body>
@@ -407,12 +456,19 @@
             <div id="playersContainer"></div>
 
             <div class="panel" style="margin-top:12px;">
-                <div class="btn-row-3">
+                <div class="btn-row-2x2">
+                    <button class="btn btn-pause" id="pauseGameBtn">⏸ Pause &amp; New Game</button>
                     <button class="btn btn-warning" id="resetScoresBtn">↺ Reset Scores</button>
                     <button class="btn btn-danger" id="endGameBtn">✓ End &amp; Save Game</button>
                     <button class="btn btn-danger" id="abandonGameBtn">✕ Abandon Game</button>
                 </div>
             </div>
+        </div>
+
+        <!-- Paused games -->
+        <div id="paused-games-section" class="panel" style="display:none; margin-top:0;">
+            <h3 style="margin-bottom:12px;">⏸ Paused Games</h3>
+            <div id="pausedGamesList"></div>
         </div>
     </div>
 
@@ -782,6 +838,88 @@
             document.getElementById('playerNames').value = '';
             syncPlayerChipsFromInput();
             syncGameChipFromInput();
+        });
+
+        /* ── Pause & multi-match ── */
+        const pausedGamesRef = ref(db, 'pausedGames');
+
+        document.getElementById('pauseGameBtn').addEventListener('click', async () => {
+            if (!confirm('Pause this game and start a new one? You can resume it anytime.')) return;
+            const snapshot = await get(gameRef);
+            const data = snapshot.val();
+            if (!data || data.gameStatus !== 'active') return;
+
+            /* save current game to pausedGames */
+            await push(pausedGamesRef, { ...data, pausedAt: Date.now() });
+
+            /* clear live game so scoreboard shows "waiting" */
+            await set(gameRef, { gameStatus: 'ended' });
+
+            document.getElementById('gameName').value = '';
+            document.getElementById('playerNames').value = '';
+            syncPlayerChipsFromInput();
+            syncGameChipFromInput();
+        });
+
+        /* listen for paused games and render the panel */
+        onValue(pausedGamesRef, (snapshot) => {
+            const data = snapshot.val();
+            const section = document.getElementById('paused-games-section');
+            const list = document.getElementById('pausedGamesList');
+            list.innerHTML = '';
+
+            if (!data) { section.style.display = 'none'; return; }
+
+            const entries = Object.entries(data).sort((a, b) => (b[1].pausedAt || 0) - (a[1].pausedAt || 0));
+            if (!entries.length) { section.style.display = 'none'; return; }
+
+            section.style.display = 'block';
+
+            entries.forEach(([pausedId, game]) => {
+                const playerNames = game.players
+                    ? Object.values(game.players).map(p => escapeHtml(p.name)).join(', ')
+                    : '';
+                const pausedTime = game.pausedAt
+                    ? new Date(game.pausedAt).toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' })
+                    : '';
+
+                const item = document.createElement('div');
+                item.className = 'paused-game-item';
+                item.innerHTML = `
+                    <div class="paused-game-info">
+                        <div class="paused-game-name">${escapeHtml(game.gameName || 'Untitled')}</div>
+                        <div class="paused-game-sub">${playerNames}${pausedTime ? ' · paused ' + pausedTime : ''}</div>
+                    </div>
+                    <div class="paused-game-actions">
+                        <button class="btn-sm btn-sm-primary resume-btn">▶ Resume</button>
+                        <button class="btn-sm btn-sm-danger drop-btn">✕</button>
+                    </div>
+                `;
+
+                item.querySelector('.resume-btn').addEventListener('click', async () => {
+                    /* if a game is currently active, ask to handle it first */
+                    const snap = await get(gameRef);
+                    const live = snap.val();
+                    if (live && live.gameStatus === 'active') {
+                        const choice = confirm('A game is currently live. Pause it and switch to this one?');
+                        if (!choice) return;
+                        /* pause the live game first */
+                        await push(pausedGamesRef, { ...live, pausedAt: Date.now() });
+                    }
+                    /* restore paused game as the live game */
+                    const { pausedAt, ...gameData } = game;
+                    await set(gameRef, { ...gameData, gameStatus: 'active' });
+                    /* remove from paused list */
+                    await set(ref(db, `pausedGames/${pausedId}`), null);
+                });
+
+                item.querySelector('.drop-btn').addEventListener('click', async () => {
+                    if (!confirm(`Abandon the paused game "${game.gameName}"? It won't be saved.`)) return;
+                    await set(ref(db, `pausedGames/${pausedId}`), null);
+                });
+
+                list.appendChild(item);
+            });
         });
     </script>
 </body>
