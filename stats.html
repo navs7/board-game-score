@@ -8,21 +8,21 @@
         @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
 
         :root {
-            --bg-color: #0f172a;
-            --text-main: #f8fafc;
-            --text-muted: #94a3b8;
-            --card-bg: #1e293b;
-            --border: #334155;
-            --primary: #3b82f6;
+            --bg-color: #111111;
+            --text-main: #efefef;
+            --text-muted: #9a9a9a;
+            --card-bg: #1e1e1e;
+            --border: #2a2a2a;
+            --primary: #e8621a;
             --success: #22c55e;
-            --warning: #f59e0b;
+            --warning: #e8621a;
             --danger: #ef4444;
         }
 
         * { box-sizing: border-box; margin: 0; padding: 0; }
 
         body {
-            font-family: 'Inter', sans-serif;
+            font-family: 'Plus Jakarta Sans', sans-serif;
             background-color: var(--bg-color);
             color: var(--text-main);
             padding: 20px;
@@ -288,7 +288,7 @@
         }
 
         .rank-1 .rank-badge { color: #fbbf24; }
-        .rank-2 .rank-badge { color: #94a3b8; }
+        .rank-2 .rank-badge { color: #9a9a9a; }
         .rank-3 .rank-badge { color: #cd7c2f; }
 
         .rank-name { flex: 1; font-weight: 600; }
@@ -420,7 +420,7 @@
         }
 
         .achievement-card {
-            background: #1a1f2e;
+            background: #252525;
             border: 1px solid rgba(255,255,255,0.08);
             border-radius: 10px;
             padding: 12px;
@@ -499,7 +499,7 @@
             border: 1px solid var(--border);
             border-radius: 8px;
             font-size: 0.95rem;
-            font-family: 'Inter', sans-serif;
+            font-family: 'Plus Jakarta Sans', sans-serif;
             background: var(--card-bg);
             color: var(--text-main);
         }
@@ -567,7 +567,7 @@
         }
 
         .lb-row.lb-1 .lb-rank { color: #fbbf24; }
-        .lb-row.lb-2 .lb-rank { color: #94a3b8; }
+        .lb-row.lb-2 .lb-rank { color: #9a9a9a; }
         .lb-row.lb-3 .lb-rank { color: #cd7c2f; }
 
         .lb-name {
@@ -597,7 +597,7 @@
         }
 
         .lb-pill.highlight {
-            background: rgba(59,130,246,0.15);
+            background: rgba(232,98,26,0.15);
             color: var(--primary);
         }
 
@@ -983,7 +983,7 @@
                 lines += `<polyline points="${pts}" fill="none" stroke="${color}" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round" opacity="0.95"/>`;
                 cumul.forEach((s, r) => {
                     const cx = padL + r * groupW + groupW / 2;
-                    lines += `<circle cx="${cx.toFixed(1)}" cy="${yOf(s).toFixed(1)}" r="4" fill="${color}" stroke="#151e2d" stroke-width="2"><title>${escapeHtml(p.name)} total after R${r+1}: ${s}</title></circle>`;
+                    lines += `<circle cx="${cx.toFixed(1)}" cy="${yOf(s).toFixed(1)}" r="4" fill="${color}" stroke="#111111" stroke-width="2"><title>${escapeHtml(p.name)} total after R${r+1}: ${s}</title></circle>`;
                 });
             });
 

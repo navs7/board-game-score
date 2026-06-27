@@ -8,25 +8,25 @@
         @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
 
         :root {
-            --bg-color: #0f172a;
-            --text-main: #f8fafc;
-            --text-muted: #94a3b8;
-            --card-bg: #1e293b;
-            --border: #334155;
-            --primary: #3b82f6;
-            --primary-hover: #2563eb;
+            --bg-color: #111111;
+            --text-main: #efefef;
+            --text-muted: #9a9a9a;
+            --card-bg: #1e1e1e;
+            --border: #2a2a2a;
+            --primary: #e8621a;
+            --primary-hover: #cf561a;
             --danger: #ef4444;
             --danger-hover: #dc2626;
             --success: #22c55e;
             --success-hover: #16a34a;
-            --warning: #f59e0b;
-            --warning-hover: #d97706;
+            --warning: #e8621a;
+            --warning-hover: #cf561a;
         }
 
         * { box-sizing: border-box; margin: 0; padding: 0; }
 
         body {
-            font-family: 'Inter', sans-serif;
+            font-family: 'Plus Jakarta Sans', sans-serif;
             background-color: var(--bg-color);
             color: var(--text-main);
             padding: 20px;
@@ -55,8 +55,8 @@
             border: 1px solid var(--border);
             border-radius: 8px;
             font-size: 1rem;
-            font-family: 'Inter', sans-serif;
-            background: #0f172a;
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background: var(--bg-color);
             color: var(--text-main);
         }
 
@@ -73,8 +73,8 @@
             border: 1px solid var(--border);
             border-radius: 8px;
             font-size: 0.9rem;
-            font-family: 'Inter', sans-serif;
-            background: #0f172a;
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background: var(--bg-color);
             color: var(--text-main);
             width: 65px;
             flex-shrink: 0;
@@ -326,7 +326,7 @@
             border-radius: 20px;
             font-size: 0.8rem;
             font-weight: 600;
-            background: #0f172a;
+            background: var(--bg-color);
             border: 1px solid var(--border);
             color: var(--text-muted);
             transition: border-color 0.15s, color 0.15s, background 0.15s;
@@ -334,7 +334,7 @@
         }
 
         .chip:hover { border-color: var(--primary); color: var(--primary); }
-        .chip.selected { border-color: var(--primary); color: var(--primary); background: rgba(59,130,246,0.1); }
+        .chip.selected { border-color: var(--primary); color: var(--primary); background: rgba(232,98,26,0.12); }
 
         @media (max-width: 480px) {
             #playersContainer { grid-template-columns: 1fr; }
