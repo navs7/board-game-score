@@ -384,20 +384,8 @@
             flex-shrink: 0;
         }
 
-        .view-profile-btn {
-            display: inline-block;
-            padding: 7px 14px;
-            background: var(--primary);
-            color: #fff;
-            font-size: 0.8rem;
-            font-weight: 700;
-            border-radius: 8px;
-            text-decoration: none;
-            white-space: nowrap;
-            transition: opacity 0.2s;
-        }
-
-        .view-profile-btn:hover { opacity: 0.85; }
+        .player-summary-card { cursor: pointer; }
+        .player-summary-card:hover { border-color: var(--primary); }
 
         /* ── Achievements (kept for any future use) ── */
         .achievements-section {
@@ -1153,6 +1141,9 @@
                     `<span title="${escapeHtml(a.name)}" style="font-size:1rem;">${a.icon}</span>`
                 ).join('');
 
+                const fromAdmin = new URLSearchParams(location.search).get('from') === 'admin';
+                const profileUrl = `player.html?key=${encodeURIComponent(player.key)}${fromAdmin ? '&from=admin' : ''}`;
+
                 const card = document.createElement('div');
                 card.className = 'player-summary-card';
                 card.innerHTML = `
@@ -1162,10 +1153,10 @@
                         <div class="pscard-ach">${achBadges || '<span style="font-size:0.72rem;color:var(--text-muted);">No achievements yet</span>'}</div>
                     </div>
                     <div class="pscard-right">
-                        <a href="player.html?key=${encodeURIComponent(player.key)}" class="view-profile-btn" onclick="event.stopPropagation()">View Profile →</a>
                         <button class="delete-btn" title="Delete this player">🗑️</button>
                     </div>
                 `;
+                card.addEventListener('click', () => { location.href = profileUrl; });
 
                 const deleteBtn = card.querySelector('.delete-btn');
                 deleteBtn.addEventListener('click', async (e) => {
