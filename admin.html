@@ -388,9 +388,52 @@
         .btn-sm-danger:hover { border-color: var(--danger); color: var(--danger); }
         .btn-pause { background-color: #7c3aed; color: white; }
         .btn-pause:hover { background-color: #6d28d9; }
+
+        html[data-theme="light"] {
+            --bg-color: #f0f0f0;
+            --card-bg: #e2e2e2;
+            --text-main: #111111;
+            --text-muted: #555555;
+            --border: #c4c4c4;
+            --primary: #e8621a;
+            --primary-hover: #cf561a;
+        }
+        html[data-theme="light"] input[type="text"],
+        html[data-theme="light"] input[type="email"],
+        html[data-theme="light"] input[type="password"],
+        html[data-theme="light"] input[type="number"] { background: #ebebeb; }
+
+        .theme-toggle {
+            position: fixed;
+            top: 14px;
+            right: 14px;
+            width: 38px;
+            height: 38px;
+            border-radius: 50%;
+            border: 1px solid var(--border);
+            background: var(--card-bg);
+            font-size: 1.1rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 999;
+            transition: border-color 0.2s, background 0.2s;
+            line-height: 1;
+        }
+        .theme-toggle:hover { border-color: var(--primary); }
+        html[data-theme="dark"]  .theme-toggle::before { content: '☀️'; }
+        html[data-theme="light"] .theme-toggle::before { content: '🌙'; }
     </style>
+    <script>
+        (function() {
+            var t = localStorage.getItem('theme') || 'dark';
+            document.documentElement.setAttribute('data-theme', t);
+        })();
+    </script>
 </head>
 <body>
+    <button class="theme-toggle" id="themeToggle" onclick="(function(){var n=document.documentElement.getAttribute('data-theme')==='dark'?'light':'dark';document.documentElement.setAttribute('data-theme',n);localStorage.setItem('theme',n);})()" title="Toggle theme"></button>
 
     <!-- Login -->
     <div id="login-section" style="display:none;">

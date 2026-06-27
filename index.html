@@ -377,9 +377,47 @@
             0%, 100% { box-shadow: 0 0 0 0 rgba(34,197,94,0.5); }
             50%       { box-shadow: 0 0 0 6px rgba(34,197,94,0); }
         }
+
+        html[data-theme="light"] {
+            --bg-color: #f0f0f0;
+            --card-bg: #e2e2e2;
+            --text-main: #111111;
+            --text-muted: #555555;
+            --border: #c4c4c4;
+            --accent: #e8621a;
+        }
+
+        .theme-toggle {
+            position: fixed;
+            top: 14px;
+            right: 14px;
+            width: 38px;
+            height: 38px;
+            border-radius: 50%;
+            border: 1px solid var(--border);
+            background: var(--card-bg);
+            font-size: 1.1rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 999;
+            transition: border-color 0.2s, background 0.2s;
+            line-height: 1;
+        }
+        .theme-toggle:hover { border-color: var(--accent); }
+        html[data-theme="dark"]  .theme-toggle::before { content: '☀️'; }
+        html[data-theme="light"] .theme-toggle::before { content: '🌙'; }
     </style>
+    <script>
+        (function() {
+            var t = localStorage.getItem('theme') || 'dark';
+            document.documentElement.setAttribute('data-theme', t);
+        })();
+    </script>
 </head>
 <body>
+    <button class="theme-toggle" id="themeToggle" onclick="(function(){var n=document.documentElement.getAttribute('data-theme')==='dark'?'light':'dark';document.documentElement.setAttribute('data-theme',n);localStorage.setItem('theme',n);})()" title="Toggle theme"></button>
     <h1 id="gameTitle" style="display:none"></h1>
 
     <!-- Waiting screen (shown when no active game) -->

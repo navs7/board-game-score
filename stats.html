@@ -19,6 +19,17 @@
             --danger: #ef4444;
         }
 
+        html[data-theme="light"] {
+            --bg-color: #f0f0f0;
+            --card-bg: #e2e2e2;
+            --text-main: #111111;
+            --text-muted: #555555;
+            --border: #c4c4c4;
+            --primary: #e8621a;
+        }
+        html[data-theme="light"] .achievement-card { background: #d8d8d8; }
+        html[data-theme="light"] .ach-icon-wrap { background: #fff3d6; }
+
         * { box-sizing: border-box; margin: 0; padding: 0; }
 
         body {
@@ -692,6 +703,12 @@
         .confirm-btn-cancel:active { opacity: 0.8; }
         .confirm-btn-delete:active { opacity: 0.85; }
     </style>
+    <script>
+        (function() {
+            var t = localStorage.getItem('theme') || 'dark';
+            document.documentElement.setAttribute('data-theme', t);
+        })();
+    </script>
 </head>
 <body>
     <div class="top-bar">

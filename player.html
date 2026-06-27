@@ -19,6 +19,18 @@
             --danger: #ef4444;
         }
 
+        html[data-theme="light"] {
+            --bg-color: #f0f0f0;
+            --card-bg: #e2e2e2;
+            --text-main: #111111;
+            --text-muted: #555555;
+            --border: #c4c4c4;
+            --primary: #e8621a;
+        }
+        html[data-theme="light"] .ach-card.earned { background: #d8d8d8; }
+        html[data-theme="light"] .ach-card.locked { background: rgba(0,0,0,0.04); }
+        html[data-theme="light"] .ach-icon-wrap { background: #fff3d6; }
+
         * { box-sizing: border-box; margin: 0; padding: 0; }
 
         body {
@@ -253,6 +265,12 @@
             font-size: 0.95rem;
         }
     </style>
+    <script>
+        (function() {
+            var t = localStorage.getItem('theme') || 'dark';
+            document.documentElement.setAttribute('data-theme', t);
+        })();
+    </script>
 </head>
 <body>
 
@@ -264,8 +282,8 @@
             const from = new URLSearchParams(location.search).get('from');
             const btn = document.getElementById('backBtn');
             if (from === 'admin') {
-                btn.href = 'admin.html';
-                btn.textContent = '← Back to Admin';
+                btn.href = 'stats.html?from=admin';
+                btn.textContent = '← Back to Stats';
             }
         })();
     </script>
