@@ -405,9 +405,6 @@
         html[data-theme="light"] input[type="number"] { background: #ebebeb; }
 
         .theme-toggle {
-            position: fixed;
-            top: 14px;
-            right: 14px;
             width: 38px;
             height: 38px;
             border-radius: 50%;
@@ -418,9 +415,9 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            z-index: 999;
             transition: border-color 0.2s, background 0.2s;
             line-height: 1;
+            flex-shrink: 0;
         }
         .theme-toggle:hover { border-color: var(--primary); }
         html[data-theme="dark"]  .theme-toggle::before { content: '☀️'; }
@@ -434,10 +431,11 @@
     </script>
 </head>
 <body>
-    <button class="theme-toggle" id="themeToggle" onclick="(function(){var n=document.documentElement.getAttribute('data-theme')==='dark'?'light':'dark';document.documentElement.setAttribute('data-theme',n);localStorage.setItem('theme',n);})()" title="Toggle theme"></button>
-
     <!-- Login -->
     <div id="login-section" style="display:none;">
+        <div style="display:flex; justify-content:flex-end; margin-bottom:8px;">
+            <button class="theme-toggle" onclick="(function(){var n=document.documentElement.getAttribute('data-theme')==='dark'?'light':'dark';document.documentElement.setAttribute('data-theme',n);localStorage.setItem('theme',n);})()" title="Toggle theme"></button>
+        </div>
         <h1>Game Admin Panel</h1>
         <p class="subtitle">Sign in to manage the scoreboard</p>
         <div class="panel">
@@ -455,6 +453,7 @@
         <div class="top-bar">
             <h1>Game Admin Panel</h1>
             <div class="top-bar-actions">
+                <button class="theme-toggle" id="themeToggle" onclick="(function(){var n=document.documentElement.getAttribute('data-theme')==='dark'?'light':'dark';document.documentElement.setAttribute('data-theme',n);localStorage.setItem('theme',n);})()" title="Toggle theme"></button>
                 <a href="stats.html?from=admin" style="text-decoration:none;"><button class="ghost-btn">📊 Stats</button></a>
                 <button class="ghost-btn danger" id="signOutBtn">Sign out</button>
             </div>
