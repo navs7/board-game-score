@@ -252,13 +252,25 @@
             gap: 10px;
         }
 
-        .top-bar h1 { margin: 0; font-size: 1.4rem; }
-        .top-bar-actions { display: flex; gap: 8px; align-items: center; }
+        .top-bar h1 {
+            margin: 0;
+            font-size: 1.4rem;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            flex-shrink: 1;
+            min-width: 0;
+        }
+
+        .top-bar-actions {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+            flex-shrink: 0;
+        }
 
         @media (max-width: 520px) {
-            .top-bar { flex-wrap: wrap; }
-            .top-bar h1 { flex: 1 0 100%; font-size: 1.2rem; text-align: left; margin-bottom: 4px; }
-            .top-bar-actions { margin-left: auto; }
+            .top-bar h1 { font-size: 1rem; }
         }
 
         .ghost-btn {
@@ -411,21 +423,23 @@
         html[data-theme="light"] input[type="number"] { background: #e8dfce; }
 
         .theme-toggle {
-            width: 38px;
-            height: 38px;
-            border-radius: 50%;
-            border: 1px solid var(--border);
-            background: var(--card-bg);
-            font-size: 1.1rem;
             cursor: pointer;
-            display: flex;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 6px 10px;
+            font-size: 0.88rem;
+            font-weight: 600;
+            background: transparent;
+            color: var(--text-muted);
+            transition: color 0.2s, border-color 0.2s;
+            white-space: nowrap;
+            display: inline-flex;
             align-items: center;
             justify-content: center;
-            transition: border-color 0.2s, background 0.2s;
-            line-height: 1;
             flex-shrink: 0;
+            line-height: 1;
         }
-        .theme-toggle:hover { border-color: var(--primary); }
+        .theme-toggle:hover { color: var(--text-main); border-color: var(--text-muted); }
         html[data-theme="dark"]  .theme-toggle::before { content: '☀️'; }
         html[data-theme="light"] .theme-toggle::before { content: '🌙'; }
     </style>
