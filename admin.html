@@ -253,7 +253,13 @@
         }
 
         .top-bar h1 { margin: 0; font-size: 1.4rem; }
-        .top-bar-actions { display: flex; gap: 8px; }
+        .top-bar-actions { display: flex; gap: 8px; align-items: center; }
+
+        @media (max-width: 520px) {
+            .top-bar { flex-wrap: wrap; }
+            .top-bar h1 { flex: 1 0 100%; font-size: 1.2rem; text-align: left; margin-bottom: 4px; }
+            .top-bar-actions { margin-left: auto; }
+        }
 
         .ghost-btn {
             cursor: pointer;
