@@ -523,7 +523,7 @@
 
     <script type="module">
         import {
-            db, ref, set, onValue, get, push,
+            db, ref, set, onValue, get, push, remove,
             auth, signInWithEmailAndPassword, signOut, onAuthStateChanged
         } from './firebase-config.js';
 
@@ -542,11 +542,34 @@
             return name.toLowerCase().replace(/[.#$[\]/\s]/g, '_');
         }
 
+        /* ── Cleanup orphaned game entries in playerRecords ── */
+        async function cleanupOrphanedGames() {
+            const [historySnap, playersSnap] = await Promise.all([
+                get(ref(db, 'gameHistory')),
+                get(ref(db, 'playerRecords'))
+            ]);
+
+            const validIds = new Set(Object.keys(historySnap.val() || {}));
+            const playerRecords = playersSnap.val() || {};
+
+            const removals = [];
+            for (const [playerKey, player] of Object.entries(playerRecords)) {
+                const games = player.games || {};
+                for (const gameId of Object.keys(games)) {
+                    if (!validIds.has(gameId)) {
+                        removals.push(remove(ref(db, `playerRecords/${playerKey}/games/${gameId}`)));
+                    }
+                }
+            }
+            if (removals.length) await Promise.all(removals);
+        }
+
         /* ── Auth ── */
         onAuthStateChanged(auth, (user) => {
             if (user) {
                 document.getElementById('login-section').style.display = 'none';
                 document.getElementById('admin-section').style.display = 'block';
+                cleanupOrphanedGames();
                 loadKnownPlayers();
                 loadKnownGames();
             } else {
