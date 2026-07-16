@@ -391,8 +391,8 @@
         .btn-pause:hover { background-color: #6d28d9; }
 
         html[data-theme="light"] {
-            --bg-color: #f0f0f0;
-            --card-bg: #e2e2e2;
+            --bg-color: #f5efe2;
+            --card-bg: #ece4d3;
             --text-main: #111111;
             --text-muted: #555555;
             --border: #c4c4c4;
@@ -402,7 +402,7 @@
         html[data-theme="light"] input[type="text"],
         html[data-theme="light"] input[type="email"],
         html[data-theme="light"] input[type="password"],
-        html[data-theme="light"] input[type="number"] { background: #ebebeb; }
+        html[data-theme="light"] input[type="number"] { background: #e8dfce; }
 
         .theme-toggle {
             width: 38px;
@@ -579,7 +579,8 @@
                 const names = Object.values(data)
                     .sort((a, b) => (b.endedAt || 0) - (a.endedAt || 0))
                     .map(g => g.gameName)
-                    .filter(n => { if (seen.has(n)) return false; seen.add(n); return true; });
+                    .filter(n => { if (seen.has(n)) return false; seen.add(n); return true; })
+                    .slice(0, 5);
 
                 if (names.length === 0) { section.style.display = 'none'; return; }
 
@@ -618,7 +619,15 @@
                 chipsWrap.innerHTML = '';
                 if (!data) { section.style.display = 'none'; return; }
 
-                const names = Object.values(data).map(p => p.name).sort();
+                const names = Object.values(data)
+                    .map(p => {
+                        const games = p.games ? Object.values(p.games) : [];
+                        const lastPlayed = games.reduce((max, g) => Math.max(max, g.endedAt || 0), 0);
+                        return { name: p.name, lastPlayed };
+                    })
+                    .sort((a, b) => b.lastPlayed - a.lastPlayed)
+                    .map(p => p.name)
+                    .slice(0, 5);
                 if (names.length === 0) { section.style.display = 'none'; return; }
 
                 section.style.display = 'block';
