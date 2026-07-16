@@ -766,7 +766,7 @@
     </div>
 
     <script type="module">
-        import { db, ref, onValue, remove, auth, onAuthStateChanged } from './firebase-config.js';
+        import { db, ref, onValue, get, remove, auth, onAuthStateChanged } from './firebase-config.js';
 
         /* ── Auth state → admin mode ── */
         const DELETE_ADMIN = '07navneet@gmail.com';
@@ -858,6 +858,16 @@
                         'This game will be permanently removed from history. This cannot be undone.'
                     );
                     if (!ok) return;
+
+                    // Remove the game entry from each player's record
+                    const players = game.players || [];
+                    const cleanups = players.map(p => {
+                        const key = p.name.toLowerCase().replace(/[.#$[\]/\s]/g, '_');
+                        return remove(ref(db, `playerRecords/${key}/games/${game.id}`));
+                    });
+                    await Promise.all(cleanups);
+
+                    // Remove from history
                     remove(ref(db, `gameHistory/${game.id}`));
                 });
 
